@@ -154,8 +154,10 @@ aumesh_sclr_decade = EpicsSignal('XF:23ID2-ES{CurrAmp:2}Gain:Decade-SP', name='a
 pd_sclr_gain = EpicsSignal('XF:23ID2-ES{CurrAmp:1}Gain:Val-SP', name='pd_sclr_gain', string=True)
 pd_sclr_decade = EpicsSignal('XF:23ID2-ES{CurrAmp:1}Gain:Decade-SP', name='pd_sclr_decade', string=True)
 
+m1b1_fp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_POS_SP', name='m1b1_fp')
 
 epu1table = EpicsSignal('XF:23ID-ID{EPU:1}Val:Table-Sel', name='epu1table')
 epu1offset = EpicsSignal('XF:23ID-ID{EPU:1-FLT}Val:InpOff1-SP', name='epu1offset')
 
 feedback = EpicsSignal('XF:23ID2-OP{FBck}Sts:FB-Sel', name='feedback')
+feedback_sp = EpicsSignal('XF:23ID2-OP{FBck}PID-SP', name='feedback_sp')

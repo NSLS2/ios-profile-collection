@@ -259,11 +259,14 @@ def edge_ascan(sample_name, edge, md=None):
 
     # init_group = 'ME_INIT_' + str(uuid.uuid4())
     yield from bps.abs_set(ioxas_x, sample_props['pos'], wait=True)
+#    yield from bps.mov(appes_x, sample_props['pos_x'])
+#    yield from bps.mov(appes_y, sample_props['pos_y'])
     yield from bps.abs_set(feedback, 0, wait=True)
     yield from bps.abs_set(pgm_energy, e_scan_params['start'], wait=True)
     yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
     yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
     yield from bps.sleep(15)
+    yield from bps.abs_set(m1b1_fp, 100)
     yield from bps.abs_set(feedback, 1, wait=True)
     yield from bps.sleep(5)
     yield from bps.abs_set(feedback, 0, wait=True)
@@ -328,7 +331,8 @@ def edge_ascan(sample_name, edge, md=None):
     ret = []
     for j in range(e_scan_params['scan_count']):
         tmp_pos = sample_props['pos'] + (j-((e_scan_params['scan_count']-1)/2))*e_scan_params['intervals']
-        yield from bps.abs_set(ioxas_x, tmp_pos, wait=True)
+#        yield from bps.mov(appes_y, tmp_pos)
+        yield from bps.mov(ioxas_x, tmp_pos)
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
         yield from open_all_valves(all_valves)
         res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
