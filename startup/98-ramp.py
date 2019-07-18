@@ -85,6 +85,10 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     yield from bps.abs_set(pgm.fly.stop_sig, stop, wait=True)
     yield from bps.abs_set(pgm.fly.velocity, velocity, wait=True)
 
+
+    if specs in dets:
+        specs.stage()
+
     # TODO do this with stage
     old_db = epu1.flt.output_deadband.get()
     yield from bps.abs_set(epu1.flt.output_deadband, deadband)
@@ -105,6 +109,9 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         # the scan.  This should be the energy set point.
         yield from bps.abs_set(epu1.flt.input_pv, old_link, wait=True)
         yield from bps.abs_set(epu1.flt.output_deadband, old_db, wait=True)
+
+        if specs in dets:
+            specs.unstage()
 
     # change to track the readout energy
     yield from change_epu_flt_link(pgm_energy.readback.pvname)

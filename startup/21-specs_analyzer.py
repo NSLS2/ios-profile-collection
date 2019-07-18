@@ -118,7 +118,7 @@ class SpecsSingleTrigger(SingleTrigger):
 
     def trigger(self):
         if self._staged != Staged.yes:
-            raise RunTimeError(f'The {self.name} detector is not ready to trigger, call ``{self.name}.stage()`` prior to'
+            raise RuntimeError(f'The {self.name} detector is not ready to trigger, call ``{self.name}.stage()`` prior to'
                                'triggering')
 
         self._status = self._status_type(self)
@@ -140,8 +140,9 @@ class SpecsDetector(SpecsSingleTrigger, DetectorBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.stage_sigs.update({self.cam.safe_state: 0}) #,
-                                # self.count_enable: 1}) to be added later
+        self.stage_sigs.update({self.cam.safe_state: 0})
+        self.stage_sigs.update({self.count_enable: 1})
+        self.stage_sigs.update({self.cam.data_type: 7})
    
         self.count.kind = Kind.hinted
  
@@ -157,7 +158,7 @@ class SpecsDetector(SpecsSingleTrigger, DetectorBase):
                        #root='/nsls2/xf23id1/xf23id2/')
     
     count = ADComponent(EpicsSignalRO, 'Stats5:Total_RBV', kind=Kind.hinted, name='count')
-    #count_enable = ADComponent(EpicsSignal, 'Stats5:EnableCallBacks', kind=Kind.omitted, name='count_enable')
+    count_enable = ADComponent(EpicsSignal, 'Stats5:EnableCallbacks', kind=Kind.omitted, name='count_enable')
     # I need to find the actual PV for above
 
     acquisition_mode = None 
