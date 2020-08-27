@@ -1,3 +1,7 @@
+import logging
+
+logging.getLogger('ophyd').setLevel('WARNING')
+
 from databroker import Broker
 
 db = Broker.named('csx2')
