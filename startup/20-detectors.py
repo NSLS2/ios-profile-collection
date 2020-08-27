@@ -39,7 +39,7 @@ class DodgyEpicsSignal(EpicsSignal):
         if as_string is None:
             as_string = self._string
 
-        with self._lock:
+        with self._metadata_lock:
             if not self._read_pv.connected:
                 if not self._read_pv.wait_for_connection(connection_timeout):
                     raise TimeoutError('Failed to connect to %s' %
