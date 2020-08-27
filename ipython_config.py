@@ -91,7 +91,7 @@ c.InteractiveShellApp.extensions = ['pyOlog.cli.ipy']
 # c.TerminalIPythonApp.module_to_run = ''
 
 # The date format used by logging formatters for %(asctime)s
-c.TerminalIPythonApp.log_datefmt = '%Y-%m-%d %H:%M:%S'
+# c.TerminalIPythonApp.log_datefmt = '%Y-%m-%d %H:%M:%S'
 
 # Whether to overwrite existing config files when copying
 # c.TerminalIPythonApp.overwrite = False
@@ -295,7 +295,7 @@ c.TerminalInteractiveShell.autocall = 0
 # c.TerminalInteractiveShell.deep_reload = False
 
 # Start logging to the given file in append mode.
-c.TerminalInteractiveShell.logappend = '/epics/xf/23id/ophyd/logs/xf23id2_log.py'
+# c.TerminalInteractiveShell.logappend = '/epics/xf/23id/ophyd/logs/xf23id2_log.py'
 
 #
 # c.TerminalInteractiveShell.xmode = 'Context'
