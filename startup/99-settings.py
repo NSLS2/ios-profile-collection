@@ -498,18 +498,21 @@ def edge_ascan(sample_name, edge, md=None):
     ret = []
     for j in range(e_scan_params['scan_count']):
         tmp_pos = sample_props['pos'] + (j-((e_scan_params['scan_count']-1)/2))*e_scan_params['intervals']
+#        points = ((e_scan_params['stop'] - e_scan_params['start'])/e_scan_params['velocity']) + 1
         yield from bps.abs_set(ioxas_x, tmp_pos, wait=True)
         yield from bps.abs_set(feedback, 0, wait=True)
         yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
         yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
         yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-        yield from bps.sleep(30)
+        yield from bps.sleep(15)
 #       yield from bps.abs_set(m1b1_fp, 100)
         yield from bps.abs_set(feedback, 1, wait=True)
         yield from bps.sleep(10)
-#        yield from bps.abs_set(feedback, 0, wait=True)
+        yield from bps.abs_set(feedback, 0, wait=True)
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
         yield from open_all_valves(all_valves)
+#        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
+#        yield from bps.sleep(10)
         res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
         yield from bps.abs_set(valve_diag3_close, 1, wait=True)
         yield from bps.abs_set(valve_mir3_close, 1, wait=True)

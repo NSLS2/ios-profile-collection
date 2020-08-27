@@ -54,6 +54,9 @@ m1a = Mirror('XF:23IDA-OP:1{Mir:1', name='m1a')
 m1b1 = M1bMirror('XF:23IDA-OP:2{Mir:1A', name='m1b1')
 m1b2 = Mirror('XF:23IDA-OP:2{Mir:1B', name='m1b2')
 
+#M3B
+m3b = Mirror('XF:23ID2-OP{Mir:3B', name='m3b')
+
 # VLS-PGM
 class PGMEnergy(PVPositionerPC):
     readback = Cpt(EpicsSignalRO, '}Enrgy-I')
@@ -166,3 +169,9 @@ appes_y = EpicsMotor('XF:23ID2-ES{APPES:1-Ax:Y}Mtr', name='appes_y')
 appes_x = EpicsMotor('XF:23ID2-ES{APPES:1-Ax:X}Mtr', name='appes_x')
 appes_z = EpicsMotor('XF:23ID2-ES{APPES:1-Ax:Z}Mtr', name='appes_z')
 appes_t = EpicsMotor('XF:23ID2-ES{APPES:1-Ax:R}Mtr', name='appes_t')
+
+#Mirror
+
+m3b_pitch = EpicsSignal('XF:23ID2-OP{Mir:3B-Ax:Pit}Mtr_POS_SP', name='m3b_pitch')
+m1b1_fp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_POS_SP', name='m1b1_fp')
+m1b1_setpoint = EpicsSignal('XF:23ID2-OP{FBck}PID-SP' , name='m1b1_setpoint')
