@@ -15,7 +15,7 @@ bec.noplot_streams.append('pgm_energy_monitor')
 bec.disable_plots()
 
 from bluesky.callbacks.zmq import Publisher
-pub = Publisher('xf23id-ca:5577')
+pub = Publisher('xf23id-ca.nsls2.bnl.local:5577')
 RE.subscribe(pub)
 #####
 
@@ -38,8 +38,8 @@ def ensure_proposal_id(md):
 from time import sleep
 import numpy as np
 
-sample_reference = SampleReference(host='xf23id-ca.cs.nsls2.local', port=7772)
-container_reference = ContainerReference(host='xf23id-ca.cs.nsls2.local', port=7772)
+sample_reference = SampleReference(host='xf23id-ca.nsls2.bnl.local', port=7772)
+container_reference = ContainerReference(host='xf23id-ca.nsls2.bnl.local', port=7772)
 
 from bluesky.callbacks.mpl_plotting import plot_peak_stats
 

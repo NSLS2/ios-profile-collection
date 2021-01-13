@@ -39,6 +39,9 @@ valve_diag3_open = EpicsSignal('XF:23ID2-VA{Diag:03-GV:1}Cmd:Opn-Cmd', name='val
 valve_mir3_open = EpicsSignal('XF:23ID2-VA{Mir:3-GV:1}Cmd:Opn-Cmd', name='valve_mir3_open')
 valve_IOXAS_LL_open = EpicsSignal('XF:23ID2-VA{IOXAS-GV:4}Cmd:Opn-Cmd', name='ioxas_ll_open')
 valve_IOXAS_LL_close = EpicsSignal('XF:23ID2-VA{IOXAS-GV:4}Cmd:Cls-Cmd', name='ioxas_ll_close')
+valve_APPES_open = EpicsSignal('XF:23ID2-VA{IOXAS-GV:5}Cmd:Opn-Cmd', name='appes_open')
+valve_APPES_close = EpicsSignal('XF:23ID2-VA{IOXAS-GV:5}Cmd:Cls-Cmd', name='appes_close')
+
 
 
 mirror_feedback = EpicsSignal('XF:23ID2-OP{FBck}Sts:FB-Sel', name='mirror_feedback')

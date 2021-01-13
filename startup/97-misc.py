@@ -25,7 +25,7 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
     for scanid in range(first_id,last_id+1,1):
         if exptype == 'normal':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Marschilok/July2020/pristine_sample_PP_C_K1_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
+            df.to_csv('~/User_Data/Marschilok/October2020/plate2_C_K_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
         elif exptype == 'PD':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Hunt/3rd_order/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
@@ -51,6 +51,20 @@ def save_all(first_id, last_id):
 #                df.to_csv('~/User_Data/Salmeron/Scan_%d.csv' % scanid)
 
 
+#def switch_to_xps():
+#    yield from bps.abs_set(ioxas_x, 250, wait=True)
+#    yield from bps.abs_set(diag3_y, 46, wait=True)
+#    yield from bps.abs_set(vortex_x, -200, wait=True)
+#    yield from bps.abs_set(au_mesh, -69.075, wait=True)
+#    yield from bps.abs_set(feedback, 0, wait=True_
+#    yield from bps.abs_set(pgm_energy, 650, wait=True)
+#    yield from bps.abs_set(epu1offset, 3.5, wait=True)
+#    yield from bps.abs_set(m1b1_setpoint, 350, wait=True)
+#    yield from bps.abs_set(m3b.pit, -1.672, wait=True)
+#    yield from bps.sleep(10)
+#    yield from bps.abs_set(feedback, 1, wait=True)
+#    yield from bps.abs_set(valve_APPES_open, 1)
+    
 
 def save_xas_csv_time(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
@@ -372,41 +386,41 @@ def beam_damage():
     yield from bps.abs_set(valve_diag3_close, 1, wait=True)
     yield from bps.abs_set(valve_mir3_close, 1, wait=True)
 
-def PEY_init(kinE, passE, dwell):
-    yield from specs.set_mode('single_count')
-    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
-    yield from bps.abs_set(specs.cam.pass_energy, passE)
-    yield from bps.abs_set(specs.cam.acquire_time, dwell)
+#def PEY_init(kinE, passE, dwell):
+#    yield from specs.set_mode('single_count')
+#    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
+#    yield from bps.abs_set(specs.cam.pass_energy, passE)
+#    yield from bps.abs_set(specs.cam.acquire_time, dwell)
 
-def PEY_XAS_scan(e_start, e_finish, velocity, deadband):
-    dets = [specs, sclr]
+#def PEY_XAS_scan(e_start, e_finish, velocity, deadband):
+#    dets = [specs, sclr]
     # dets = [sclr, norm_ch4, ring_curr]
 
-    for channel in ['channels.chan3','channels.chan4']:
-        getattr(sclr, channel).kind = 'hinted'
-    for channel in ['channels.chan2']:
-        getattr(sclr, channel).kind = 'normal'
+#    for channel in ['channels.chan3','channels.chan4']:
+#        getattr(sclr, channel).kind = 'hinted'
+#    for channel in ['channels.chan2']:
+#        getattr(sclr, channel).kind = 'normal'
 
-    yield from bps.mov(pgm_energy, e_start)
-    yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
+#    yield from bps.mov(pgm_energy, e_start)
+#    yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
 
-def find_beam(photonE, bindingE):
-    dets = [specs, sclr]
-    yield from bps.abs_set(feedback, 0)
-    yield from bps.mov(pgm_energy, photonE)
-    yield from bps.sleep(5)
-    yield from bps.abs_set(feedback, 1)
-    yield from bps.sleep(5)
-    yield from specs.set_mode('single_count')
-    kinE = photonE - bindingE
-    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
-    yield from bps.abs_set(specs.cam.pass_energy, 10)
-    yield from bps.abs_set(specs.cam.acquire_time, 0.5)
+#def find_beam(photonE, bindingE):
+#    dets = [specs, sclr]
+#    yield from bps.abs_set(feedback, 0)
+#    yield from bps.mov(pgm_energy, photonE)
+#    yield from bps.sleep(5)
+#    yield from bps.abs_set(feedback, 1)
+#    yield from bps.sleep(5)
+ #   yield from specs.set_mode('single_count')
+#    kinE = photonE - bindingE
+#    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
+#    yield from bps.abs_set(specs.cam.pass_energy, 10)
+#    yield from bps.abs_set(specs.cam.acquire_time, 0.5)
 
-    for channel in ['channels.chan4']:
-        getattr(sclr, channel).kind = 'hinted'
-    for channel in ['channels.chan2', 'channels.chan3']:
-        getattr(sclr, channel).kind = 'normal'
+#    for channel in ['channels.chan4']:
+#        getattr(sclr, channel).kind = 'hinted'
+#    for channel in ['channels.chan2', 'channels.chan3']:
+#        getattr(sclr, channel).kind = 'normal'
 
     yield from bp.scan(dets, m1b1_setpoint, 290, 360, 71)
 
@@ -454,7 +468,7 @@ def epu_gap_scans():
 
 #   1st order horizontal
 
-    yield from bps.abs_set(epu1table, 2)
+    yield from bps.abs_set(epu1table, 4)
     yield from bps.sleep(20)
     yield from bps.mov(pgm_energy, 250)
 
@@ -478,7 +492,7 @@ def epu_gap_scans():
 
 #   3rd order horizontal
     yield from bps.abs_set(epu1.phase, 0, wait=True)
-    yield from bps.abs_set(epu1table, 3)
+    yield from bps.abs_set(epu1table, 5)
     yield from bps.sleep(20)
     yield from bps.abs_set(pgm_energy, 750, wait=True)
 
@@ -626,7 +640,7 @@ REF_EDGES = {'Al' : {'energy': 1565 , 'epu_table': 5 , 'vortex_low': 2000 , 'vor
              'F'  : {'energy': 691  , 'epu_table': 4 , 'vortex_low': 700  , 'vortex_high': 1000},
              'Na' : {'energy': 1075 , 'epu_table': 4 , 'vortex_low': 1000 , 'vortex_high': 1400},
              'N'  : {'energy': 407  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 600},
-             'Co' : {'energy': 781  , 'epu_table': 4 , 'vortex_low': 850  , 'vortex_high': 1000},
+             'Co' : {'energy': 781  , 'epu_table': 4 , 'vortex_low': 800  , 'vortex_high': 1000},
              'Mn' : {'energy': 654  , 'epu_table': 4 , 'vortex_low': 700  , 'vortex_high': 800},
              'Ti' : {'energy': 466  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 650},
              'Mo' : {'energy': 380  , 'epu_table': 4 , 'vortex_low': 300  , 'vortex_high': 500},
@@ -716,7 +730,7 @@ def restore_hint_state(dev, prev_state):
 
 # dets definition, all relevant variables around
 #dets_stab = [specs, ring_curr, foe_DI_P_in, foe_DI_P_out, mono_air_T, mirr_T, grt1_T, grt2_T, grt3_T, grt4_T, epu1.gap, epu2.gap]
-dets_stab = [specs, ring_curr, epu1.gap, epu2.gap]
+#dets_stab = [specs, ring_curr, epu1.gap, epu2.gap]
 
 
 def mono_stability():
@@ -740,22 +754,22 @@ CORE_LEVELS = {'C1s' : {'binding_en': 1560 , 'epu_table': 2},
              'Ag3d' : {'binding_en': 368  , 'epu_table': 2},
 }
 
-def beam_studies():
-    ring_curr.kind='hinted'
+#def beam_studies():
+#    ring_curr.kind='hinted'
    
-    yield from specs.set_mode('single_count')
-    yield from bps.abs_set(specs.cam.pass_energy, 10)
-    yield from bps.abs_set(specs.cam.acquire_time, 0.2)
+#    yield from specs.set_mode('single_count')
+#    yield from bps.abs_set(specs.cam.pass_energy, 10)
+#    yield from bps.abs_set(specs.cam.acquire_time, 0.2)
 
 
-    yield from bps.abs_set(feedback, 0)
-    yield from bps.abs_set(pgm_energy, 700, wait=True)
-    yield from bps.abs_set(epu1table, 2, wait=True)
-    yield from bps.sleep(10)
-    yield from bps.abs_set(feedback, 1)
+#    yield from bps.abs_set(feedback, 0)
+#    yield from bps.abs_set(pgm_energy, 700, wait=True)
+#    yield from bps.abs_set(epu1table, 2, wait=True)
+#    yield from bps.sleep(10)
+#    yield from bps.abs_set(feedback, 1)
  
-    yield from bps.abs_set(specs.cam.kinetic_energy, 332)
-    yield from count(dets_stab,num=None, delay=0.2)
+#    yield from bps.abs_set(specs.cam.kinetic_energy, 332)
+#    yield from count(dets_stab,num=None, delay=0.2)
 
  
 
