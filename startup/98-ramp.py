@@ -122,8 +122,14 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         st = StatusBase()
         enum_map = pgm.fly.scan_status.describe()[pgm.fly.scan_status.name]['enum_strs']
         def _done_cb(value, old_value, **kwargs):
-            old_value = enum_map[int(old_value)]
-            value = enum_map[int(value)]
+            try:
+                old_value = enum_map[int(old_value)]
+            except (TypeError, ValueError):
+                ...
+            try:
+                value = enum_map[int(value)]
+            except (TypeError, ValueError):
+                ...
             if old_value != value and value == 'Ready':
                 st._finished()
                 pgm.fly.scan_status.clear_sub(_done_cb)
