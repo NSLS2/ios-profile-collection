@@ -314,13 +314,19 @@ def plot_raw_xas(scanid1,scanid2,label,scan_type='TEY',normto1='Y'):
                 df1.plot(x = 'pgm_energy_readback', y = 'Raw', label = str(i), ax=label)
 
 
-def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True):
-    if inc_vortex == True:
+def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr = True):
+    if inc_vortex == True and inc_sclr == True:
         for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
             getattr(vortex, channel).kind = 'hinted'
         for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
             getattr(vortex, channel).kind = 'normal'
         dets = [sclr, vortex, norm_ch4, ring_curr]
+    elif inc_vortex == True and inc_sclr != True:
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
+            getattr(vortex, channel).kind = 'hinted'
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+            getattr(vortex, channel).kind = 'normal'
+        dets = [vortex, ring_curr]
     else:
         dets = [sclr, norm_ch4, ring_curr]
 
@@ -331,6 +337,12 @@ def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True):
 
     yield from bps.mov(pgm_energy, e_start)
     yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
+
+def Repeater(max, e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr = True):
+    num = 0
+    while num <= max:
+        yield from XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex, inc_sclr)
+        num += 1
 
 def beam_damage():
     dets = [sclr, vortex]
@@ -641,7 +653,7 @@ REF_EDGES = {'Al' : {'energy': 1565 , 'epu_table': 5 , 'vortex_low': 2000 , 'vor
              'Na' : {'energy': 1075 , 'epu_table': 4 , 'vortex_low': 1000 , 'vortex_high': 1400},
              'N'  : {'energy': 407  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 600},
              'Co' : {'energy': 781  , 'epu_table': 4 , 'vortex_low': 800  , 'vortex_high': 1000},
-             'Mn' : {'energy': 654  , 'epu_table': 4 , 'vortex_low': 700  , 'vortex_high': 800},
+             'Mn' : {'energy': 642  , 'epu_table': 4 , 'vortex_low': 700  , 'vortex_high': 800},
              'Ti' : {'energy': 466  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 650},
              'Mo' : {'energy': 380  , 'epu_table': 4 , 'vortex_low': 300  , 'vortex_high': 500},
              'C' : {'energy': 293 , 'epu_table': 4 , 'vortex_low': 220 , 'vortex_high': 400},
@@ -651,6 +663,7 @@ REF_EDGES = {'Al' : {'energy': 1565 , 'epu_table': 5 , 'vortex_low': 2000 , 'vor
              'Si' : {'energy': 1860  , 'epu_table': 5 , 'vortex_low': 1800  , 'vortex_high': 2200},
              'Rb' : {'energy': 1806  , 'epu_table': 5 , 'vortex_low': 1600  , 'vortex_high': 1800},
              'Cl' : {'energy': 945  , 'epu_table': 4 , 'vortex_low': 2800  , 'vortex_high': 3400},
+             'Zn' : {'energy': 1065  , 'epu_table': 4 , 'vortex_low': 1100  , 'vortex_high': 1250},
 }
 
 def find_sample(edge, xstart, xstop, step):

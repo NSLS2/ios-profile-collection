@@ -510,7 +510,7 @@ def edge_ascan(sample_name, edge, md=None):
         yield from bps.abs_set(feedback, 1, wait=True)
         yield from bps.sleep(5)
         yield from bps.abs_set(feedback, 0, wait=True)
-        yield from bps.sleep(5)
+#        yield from bps.sleep(5)
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
         yield from open_all_valves(all_valves)
 #        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
