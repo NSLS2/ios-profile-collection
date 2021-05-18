@@ -87,9 +87,17 @@ CONTAINER = None
 #        sample_reference.create(**SAMPLE_MAP[k], container=CONTAINER)
 
 
+def _read_excel(fname, **kwargs):
+    df = pd.read_excel(fname, **kwargs)
+    # Drop the columns if all values are NaNs:
+    df = df.dropna(how='all', axis='columns')
+    # Drop the rows if there is at least one NaN value:
+    df = df.dropna(how='any', axis='rows')
+    return df
+
 
 def load_samples(fname, container=CONTAINER):
-    f = pd.read_excel(fname).dropna(how='all', axis='columns')
+    f = _read_excel(fname)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
@@ -109,7 +117,7 @@ def load_samples(fname, container=CONTAINER):
     return SAMPLE_MAP2
 
 def load_det_settings(fname, container=CONTAINER):
-    f = pd.read_excel(fname, dtype=object).dropna(how='all', axis='columns')
+    f = _read_excel(fname, dtype=object)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
@@ -131,7 +139,7 @@ def load_det_settings(fname, container=CONTAINER):
     return SAMPLE_MAP2
 
 def load_scan_parameters(fname, container=CONTAINER):
-    f = pd.read_excel(fname, dtype=object).dropna(how='all', axis='columns')
+    f = _read_excel(fname, dtype=object)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
