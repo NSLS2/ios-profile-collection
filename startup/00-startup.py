@@ -55,7 +55,8 @@ bec.noplot_streams.append('pgm_energy_monitor')
 bec.disable_plots()
 
 from bluesky.callbacks.zmq import Publisher
-pub = Publisher('xf23id-ca.nsls2.bnl.local:5577')
+# pub = Publisher('xf23id-ca.nsls2.bnl.local:5577')
+pub = Publisher('localhost:5577')
 RE.subscribe(pub)
 #####
 

@@ -89,7 +89,7 @@ CONTAINER = None
 
 
 def load_samples(fname, container=CONTAINER):
-    f = pd.read_excel(fname).dropna()
+    f = pd.read_excel(fname).dropna(axis=1)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
@@ -109,7 +109,7 @@ def load_samples(fname, container=CONTAINER):
     return SAMPLE_MAP2
 
 def load_det_settings(fname, container=CONTAINER):
-    f = pd.read_excel(fname, dtype=object).dropna()
+    f = pd.read_excel(fname, dtype=object).dropna(axis=1)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
@@ -131,7 +131,7 @@ def load_det_settings(fname, container=CONTAINER):
     return SAMPLE_MAP2
 
 def load_scan_parameters(fname, container=CONTAINER):
-    f = pd.read_excel(fname, dtype=object).dropna()
+    f = pd.read_excel(fname, dtype=object).dropna(axis=1)
     SAMPLE_MAP2 = dict()
     loaded_excel = f.T.to_dict().values()
     for entry in loaded_excel:
@@ -302,6 +302,8 @@ def XAS_edge_scan(edge, md=None):
 #    yield from bps.sleep(2)
     yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
     yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
+    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
+    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
     yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, det_settings['aumeshdecade'], wait=True)
@@ -455,6 +457,8 @@ def edge_ascan(sample_name, edge, md=None):
 #    yield from bps.sleep(2)
     yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
     yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
+    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
+    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
     yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, det_settings['aumeshdecade'], wait=True)
