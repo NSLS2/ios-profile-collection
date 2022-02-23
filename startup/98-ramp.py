@@ -86,8 +86,8 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     yield from bps.abs_set(pgm.fly.velocity, velocity, wait=True)
 
 
-#    if specs in dets:
-#        specs.stage()
+    if specs in dets:
+        specs.stage()
 
     # TODO do this with stage
     old_db = epu1.flt.output_deadband.get()
@@ -110,8 +110,8 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         yield from bps.abs_set(epu1.flt.input_pv, old_link, wait=True)
         yield from bps.abs_set(epu1.flt.output_deadband, old_db, wait=True)
 
-#        if specs in dets:
-#            specs.unstage()
+        if specs in dets:
+            specs.unstage()
 
     # change to track the readout energy
     yield from change_epu_flt_link(pgm_energy.readback.pvname)
@@ -122,6 +122,8 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         st = StatusBase()
         enum_map = pgm.fly.scan_status.describe()[pgm.fly.scan_status.name]['enum_strs']
         def _done_cb(value, old_value, **kwargs):
+            print(f'Old value {old_value} -> new value {value}')
+            print(f'Old value type {type(old_value)} -> new value {type(value)}')
             try:
                 old_value = enum_map[int(old_value)]
             except (TypeError, ValueError):

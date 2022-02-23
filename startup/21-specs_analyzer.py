@@ -142,19 +142,18 @@ class SpecsDetector(SpecsSingleTrigger, DetectorBase):
         super().__init__(*args, **kwargs)
         self.stage_sigs.update({self.cam.safe_state: 0})
         self.stage_sigs.update({self.count_enable: 1})
-        self.stage_sigs.update({self.cam.data_type: 7})
+        self.stage_sigs.update({self.cam.data_type: 9})
    
         self.count.kind = Kind.hinted
  
     cam = ADComponent(SpecsDetectorCam, 'cam1:')
-    hdf1 = ADComponent(SpecsHDF5Plugin,
-                       name='hdf1',
-                       suffix='HDF1:',
-                       write_path_template='/GPFS/xf23id/xf23id2/data/specs/%Y/%m/%d/',
+#    hdf1 = ADComponent(SpecsHDF5Plugin,
+#                       name='hdf1',suffix='HDF1:',
+#                       write_path_template='/GPFS/xf23id/xf23id2/data/specs/%Y/%m/%d/',
                        # write_path_template='/nsls2/xf23id1/xf23id2/data/specs/%Y/%m/%d/',
                        #read_path_template='/nsls2/xf23id1/xf23id2/data/specs/%Y/%m/%d/',
                        #write_path_template='X:\xf23id2\data\specs\\%Y\\%m\\%d\\',
-                       root='/GPFS/xf23id/xf23id2/')
+#                       root='/GPFS/xf23id/xf23id2/')
                        #root='/nsls2/xf23id1/xf23id2/')
     
     count = ADComponent(EpicsSignalRO, 'Stats5:Total_RBV', kind=Kind.hinted, name='count')
@@ -188,8 +187,8 @@ class SpecsDetector(SpecsSingleTrigger, DetectorBase):
                             f' type SPECSmode, set was not performed')
 
         if mode is SPECSmode.single_count:
-            yield from mv(self.cam.acquire_mode, 3,
-                          self.hdf1.enable, 0)
+            yield from mv(self.cam.acquire_mode, 3)
+            #,self.hdf1.enable, 0)
         elif mode == SPECSmode.spectrum:
             yield from mv(self.cam.acquire_mode, 0,
                           self.hdf1.enable, 1)

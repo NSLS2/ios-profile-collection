@@ -31,7 +31,7 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
             df.to_csv('~/User_Data/Hunt/3rd_order/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
         elif exptype == 'PEY':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/3rd_order/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
+            df.to_csv('~/User_Data/Ozkan/Dec2021/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
         else:
             print('Unknown file type')
 
@@ -66,18 +66,16 @@ def save_all(first_id, last_id):
 #    yield from bps.abs_set(valve_APPES_open, 1)
     
 
-def save_xas_csv_time(first_id, last_id):
+def save_xas_time(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
                 df = db.get_table(db[scanid])
                 #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
                 df.to_csv('~/User_Data/Hunt/Carbon_contamination/Time_Scan_%d.csv' % scanid, columns=['time', 'sclr_ch2', 'sclr_ch3'])
 
-def save_xas_csv_all(first_id, last_id):
+def save_xas_position(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
                 df = db.get_table(db[scanid])
-#                df['Norm'] = df['sclr_ch4']/df['sclr_ch3']
-                #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
-                df.to_csv('~/User_Data/Wen/Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'ioxas_x', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'vortex_mca_rois_roi2_count',  'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=False)
+                df.to_csv('~/User_Data/Yildiz_Group_XAS/Nov2021/Position_Scan_%d.csv' % scanid, columns=['ioxas_x', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'vortex_mca_rois_roi2_count'], index=False)
 
 
 def liveplot_photodiode():
@@ -156,8 +154,10 @@ def plot_norm_async_xas(scanid1,scanid2,normid,label,scan_type='TEY',normto1='Y'
                        df1['Norm'] = df1['vortex_mca_rois_roi1_count']/dfn['sclr_ch2']
                 elif ((scan_type == 'TRANS') or (scan_type == 'trans')):
                        df1['Norm'] = -1*np.log(df1['sclr_ch4']/dfn['sclr_ch4'])
-                elif ((scan_type == 'PEY') or (scan_type == 'pey')):
+                elif ((scan_type == 'PEY2PD') or (scan_type == 'pey2pd')):
                        df1['Norm'] = df1['specs_count']/dfn['sclr_ch2']
+                elif ((scan_type == 'PEY2PEY') or (scan_type == 'pey2pey')):
+                       df1['Norm'] = df1['specs_count']/dfn['specs_count']
                 elif ((scan_type == 'IPFY') or (scan_type == 'ipfy')):
                        df1['Norm'] = 1/(df1['vortex_mca_rois_roi3_count']/dfn['sclr_ch2'])
                 
@@ -338,10 +338,10 @@ def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr 
     yield from bps.mov(pgm_energy, e_start)
     yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
 
-def Repeater(max, e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr = True):
+def Excel_Repeater(max):
     num = 0
-    while num <= max:
-        yield from XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex, inc_sclr)
+    while num < max:
+        yield from multi_sample_edge()
         num += 1
 
 def beam_damage():
@@ -398,36 +398,37 @@ def beam_damage():
     yield from bps.abs_set(valve_diag3_close, 1, wait=True)
     yield from bps.abs_set(valve_mir3_close, 1, wait=True)
 
-#def PEY_init(kinE, passE, dwell):
-#    yield from specs.set_mode('single_count')
-#    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
-#    yield from bps.abs_set(specs.cam.pass_energy, passE)
-#    yield from bps.abs_set(specs.cam.acquire_time, dwell)
+def PEY_init(kinE, passE, dwell):
+    yield from specs.set_mode('single_count')
+    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
+    yield from bps.abs_set(specs.cam.pass_energy, passE)
+    yield from bps.abs_set(specs.cam.acquire_time, dwell)
+    yield from bps.abs_set(specs.cam.lens_mode, 0)
 
-#def PEY_XAS_scan(e_start, e_finish, velocity, deadband):
-#    dets = [specs, sclr]
+def PEY_XAS_scan(e_start, e_finish, velocity, deadband):
+    dets = [specs, sclr]
     # dets = [sclr, norm_ch4, ring_curr]
 
-#    for channel in ['channels.chan3','channels.chan4']:
-#        getattr(sclr, channel).kind = 'hinted'
-#    for channel in ['channels.chan2']:
-#        getattr(sclr, channel).kind = 'normal'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'normal'
 
-#    yield from bps.mov(pgm_energy, e_start)
-#    yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
+    yield from bps.mov(pgm_energy, e_start)
+    yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
 
-#def find_beam(photonE, bindingE):
-#    dets = [specs, sclr]
-#    yield from bps.abs_set(feedback, 0)
-#    yield from bps.mov(pgm_energy, photonE)
-#    yield from bps.sleep(5)
-#    yield from bps.abs_set(feedback, 1)
-#    yield from bps.sleep(5)
- #   yield from specs.set_mode('single_count')
-#    kinE = photonE - bindingE
-#    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
-#    yield from bps.abs_set(specs.cam.pass_energy, 10)
-#    yield from bps.abs_set(specs.cam.acquire_time, 0.5)
+def find_beam(photonE, bindingE):
+    dets = [specs, sclr]
+    yield from bps.abs_set(feedback, 0)
+    yield from bps.mov(pgm_energy, photonE)
+    yield from bps.sleep(5)
+    yield from bps.abs_set(feedback, 1)
+    yield from bps.sleep(5)
+    yield from specs.set_mode('single_count')
+    kinE = photonE - bindingE
+    yield from bps.abs_set(specs.cam.kinetic_energy, kinE)
+    yield from bps.abs_set(specs.cam.pass_energy, 10)
+    yield from bps.abs_set(specs.cam.acquire_time, 0.5)
 
 #    for channel in ['channels.chan4']:
 #        getattr(sclr, channel).kind = 'hinted'

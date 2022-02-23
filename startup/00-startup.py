@@ -45,7 +45,7 @@ from databroker import Broker
 db = Broker.named('ios')
 
 import nslsii
-nslsii.configure_base(get_ipython().user_ns, db)
+nslsii.configure_base(get_ipython().user_ns, db, publish_documents_with_kafka=True)
 # make sure Best Effort Callback does not plot the baseline readings
 bec.noplot_streams.append('pgm_energy_monitor')
 
