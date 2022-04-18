@@ -1,0 +1,1 @@
+RE(count([sclr], num=5))
