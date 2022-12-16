@@ -25,10 +25,10 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
     for scanid in range(first_id,last_id+1,1):
         if exptype == 'normal':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Marschilok/October2020/plate2_C_K_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
+            df.to_csv('~/User_Data/Hunt/EXAFS_Testing/Aug2022/TiOxides_O_EXAFS_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
         elif exptype == 'PD':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/3rd_order/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
+            df.to_csv('~/User_Data/Hunt/EXAFS_Testing/Aug2022/TiOxides_PD_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
         elif exptype == 'PEY':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Ozkan/Dec2021/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
@@ -124,19 +124,32 @@ def plot_epugap(scanid1,scanid2,label):
         df1['Norm'] = df1['sclr_ch2']
         df1.plot(x = 'epu1_gap_readback', y = 'Norm', label = str(i), ax=label)
 
-def plot_sample_map_tey(scanid1,scanid2,label):
-        plt.figure(label)
-        label = plt.gca()
-        for i in range (scanid1, scanid2+1):
-                df1 = db.get_table(db[i])
-                df1.plot(x = 'ioxas_x', y = 'sclr_ch4', label = str(i), ax=label)
+#def plot_sample_map_tey(scanid1,scanid2,label,scan_type='TEY'):
+#        plt.figure(label)
+#        label = plt.gca()
+#        for i in range (scanid1, scanid2+1):
+#                df1 = db.get_table(db[i])
+#                df1.plot(x = 'ioxas_x', y = 'sclr_ch4', label = str(i), ax=label)
 
-def plot_sample_map_pfy(scanid1,scanid2,label):
+def plot_sample_map(scanid1,scanid2,label, scan_type='TEY'):
         plt.figure(label)
         label = plt.gca()
         for i in range (scanid1, scanid2+1):
                 df1 = db.get_table(db[i])
-                df1.plot(x = 'ioxas_x', y = 'vortex_mca_rois_roi4_count', label = str(i), ax=label)
+                if ((scan_type == 'TEY') or (scan_type == 'tey')):
+                       df1['Intensity'] = df1['sclr_ch4']
+                elif ((scan_type == 'PFY') or (scan_type == 'pfy')):
+                       df1['Intensity'] = df1['vortex_mca_rois_roi2_count']
+                df1.plot(x = 'ioxas_x', y = 'Intensity', label = str(i), ax=label)
+ 
+
+def custom_plot(scanid1,scanid2,label,x_axis='x_ax', y_axis='y_ax'):
+        plt.figure(label)
+        label = plt.gca()
+        for i in range (scanid1, scanid2+1):
+            df1 = db.get_table(db[i])
+            df1.plot(x = x_axis, y = y_axis, label = str(i), ax=label)
+
 
 # Composite plotting routines
 
@@ -313,6 +326,113 @@ def plot_raw_xas(scanid1,scanid2,label,scan_type='TEY',normto1='Y'):
 
                 df1.plot(x = 'pgm_energy_readback', y = 'Raw', label = str(i), ax=label)
 
+def time_scan(det_list):
+    old_hints_vortex = save_hint_state(vortex)
+    old_hints_sclr = save_hint_state(sclr)
+    if (det_list == 'photodiode'):
+        dets = [sclr]
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'normal'
+    elif (det_list == 'au_mesh'):
+        dets = [sclr]
+        for channel in ['channels.chan3']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'normal'
+    elif (det_list == 'sample_tey'):
+        dets = [sclr]
+        for channel in ['channels.chan3','channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+    elif (det_list == 'sample_pfy'):
+        dets = [vortex]
+        for channel in ['mca.rois.roi4.count']:
+            getattr(vortex, channel).kind = 'hinted'
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+            getattr(vortex, channel).kind = 'normal'
+    elif (det_list == 'sample_tey_pfy'):
+        dets = [sclr, vortex]
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+        for channel in ['mca.rois.roi4.count']:
+            getattr(vortex, channel).kind = 'hinted'
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+            getattr(vortex, channel).kind = 'normal'
+    elif (det_list == 'sample_tey_pey'):
+        dets = [sclr, specs]
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+
+    yield from bp.count(dets, num=None)
+  
+    restore_hint_state(vortex, old_hints_vortex)
+    restore_hint_state(sclr, old_hints_sclr)
+
+
+def custom_scan(det_list, motor_list, motor_start, motor_stop, step_size):
+    old_hints_vortex = save_hint_state(vortex)
+    old_hints_sclr = save_hint_state(sclr)
+    if (det_list == 'photodiode'):
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'normal'
+        dets = [sclr]
+    elif (det_list == 'au_mesh'):
+        for channel in ['channels.chan3']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'normal'
+        dets = [sclr]
+    elif (det_list == 'sample_tey'):
+        for channel in ['channels.chan3','channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+        dets = [sclr]
+    elif (det_list == 'sample_pfy'):
+        for channel in ['mca.rois.roi4.count']:
+            getattr(vortex, channel).kind = 'hinted'
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+            getattr(vortex, channel).kind = 'normal'
+        dets = [vortex]
+    elif (det_list == 'sample_tey_pfy'):
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+        for channel in ['mca.rois.roi4.count']:
+            getattr(vortex, channel).kind = 'hinted'
+        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+            getattr(vortex, channel).kind = 'normal'
+        dets = [sclr, vortex]
+    elif (det_list == 'sample_tey_pey'):
+        for channel in ['channels.chan3', 'channels.chan4']:
+            getattr(sclr, channel).kind = 'hinted'
+        for channel in ['channels.chan2']:
+            getattr(sclr, channel).kind = 'normal'
+        dets = [sclr, specs]
+    
+    pts = abs(int(round((motor_stop-motor_start)/step_size)+1))
+    yield from bps.abs_set(motor_list, motor_start, wait=True)
+    yield from bp.scan(dets, motor_list, motor_start, motor_stop, pts)
+  
+    restore_hint_state(vortex, old_hints_vortex)
+    restore_hint_state(sclr, old_hints_sclr)
+
+
+
+
+
+
+        
 
 def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr = True):
     if inc_vortex == True and inc_sclr == True:
@@ -338,11 +458,18 @@ def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr 
     yield from bps.mov(pgm_energy, e_start)
     yield from E_ramp(dets, e_start, e_finish, velocity, deadband=deadband)
 
-def Excel_Repeater(max):
+def Excel_Repeater(max, script_type):
     num = 0
     while num < max:
-        yield from multi_sample_edge()
-        num += 1
+        if (script_type == 'tey_pfy_fly'):
+            yield from multi_sample_edge()
+            num += 1
+        elif (script_type == 'tey_pfy_step'):
+            yield from multi_step_scan()
+            num +=1
+        elif (script_type == 'pey_xas'):
+            yield from multi_pey_edge()
+            num += 1
 
 def beam_damage():
     dets = [sclr, vortex]
@@ -458,7 +585,7 @@ def PD_count():
 
     dets = [sclr, ring_curr]
 
-    yield from bp.count(dets, num=None, delay=30)
+    yield from bp.count(dets, num=None, delay=1)
 
 def Aumesh_count():
     for channel in ['channels.chan3','channels.chan2']:
@@ -665,11 +792,12 @@ REF_EDGES = {'Al' : {'energy': 1565 , 'epu_table': 5 , 'vortex_low': 2000 , 'vor
              'Rb' : {'energy': 1806  , 'epu_table': 5 , 'vortex_low': 1600  , 'vortex_high': 1800},
              'Cl' : {'energy': 945  , 'epu_table': 4 , 'vortex_low': 2800  , 'vortex_high': 3400},
              'Zn' : {'energy': 1065  , 'epu_table': 4 , 'vortex_low': 1100  , 'vortex_high': 1250},
+             'V' : {'energy': 525  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 700},
 }
 
 def find_sample(edge, xstart, xstop, step):
     edge_params = REF_EDGES[edge]
-    pts = abs(int(round((xstop-xstart)/step)))
+    pts = abs(int(round((xstop-xstart)/step)+1))
     yield from bps.abs_set(feedback, 0)
     yield from bps.abs_set(pgm_energy, edge_params['energy'], wait=True)
     yield from bps.abs_set(epu1table, edge_params['epu_table'], wait=True)
