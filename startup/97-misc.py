@@ -25,10 +25,10 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
     for scanid in range(first_id,last_id+1,1):
         if exptype == 'normal':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/EXAFS_Testing/Aug2022/TiOxides_O_EXAFS_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
+            df.to_csv('~/User_Data/Hu/Dec2022/elyte2_Mg_K1_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'], index=True)
         elif exptype == 'PD':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/EXAFS_Testing/Aug2022/TiOxides_PD_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
+            df.to_csv('~/User_Data/Hu/Dec2022/photodiode_O_K1_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
         elif exptype == 'PEY':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Ozkan/Dec2021/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
@@ -793,6 +793,7 @@ REF_EDGES = {'Al' : {'energy': 1565 , 'epu_table': 5 , 'vortex_low': 2000 , 'vor
              'Cl' : {'energy': 945  , 'epu_table': 4 , 'vortex_low': 2800  , 'vortex_high': 3400},
              'Zn' : {'energy': 1065  , 'epu_table': 4 , 'vortex_low': 1100  , 'vortex_high': 1250},
              'V' : {'energy': 525  , 'epu_table': 4 , 'vortex_low': 400  , 'vortex_high': 700},
+             'Mg' : {'energy': 1320  , 'epu_table': 4 , 'vortex_low': 1200 , 'vortex_high' : 1450},
 }
 
 def find_sample(edge, xstart, xstop, step):
