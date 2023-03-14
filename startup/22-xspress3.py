@@ -41,12 +41,10 @@ xs3 = xspress3_class(prefix=xs3_pv_prefix, name="xs3")
 # TODO: check why xs3.hdf5plugin.warmup() hangs.
 
 # Hint the fields below to have the events generated:
-for ch in (1,):
-    channel = getattr(xs3, f"channel{ch:02d}")
+for channel in xs3.iterate_channels():
     channel.kind = "normal"
     channel.data.kind = "normal"
-    for roi in (1, 2, 3, 4):
-        mcaroi = getattr(channel, f"mcaroi{roi:02d}")
+    for mcaroi in channel.iterate_mcarois():
         mcaroi.kind = "hinted"
         mcaroi.total_rbv.kind = "hinted"
         mcaroi.total_rbv.name = mcaroi.roi_name.get()
