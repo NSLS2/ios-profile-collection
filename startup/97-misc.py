@@ -436,17 +436,27 @@ def custom_scan(det_list, motor_list, motor_start, motor_stop, step_size):
 
 def XAS_scan(e_start, e_finish, velocity, deadband, inc_vortex = True, inc_sclr = True):
     if inc_vortex == True and inc_sclr == True:
-        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-            getattr(vortex, channel).kind = 'hinted'
-        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-            getattr(vortex, channel).kind = 'normal'
-        dets = [sclr, vortex, norm_ch4, ring_curr]
+#        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
+#            getattr(vortex, channel).kind = 'hinted'
+#        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+#            getattr(vortex, channel).kind = 'normal'
+#        dets = [sclr, vortex, norm_ch4, ring_curr]
+        for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
+            getattr(xs3, channel).kind = 'hinted'
+        for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv']:
+            getattr(xs3, channel).kind = 'normal'
+        dets = [sclr, xs3, norm_ch4, ring_curr]
     elif inc_vortex == True and inc_sclr != True:
-        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-            getattr(vortex, channel).kind = 'hinted'
-        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-            getattr(vortex, channel).kind = 'normal'
-        dets = [vortex, ring_curr]
+#        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
+#            getattr(vortex, channel).kind = 'hinted'
+#        for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+#            getattr(vortex, channel).kind = 'normal'
+#        dets = [vortex, ring_curr]
+        for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
+            getattr(xs3, channel).kind = 'hinted'
+        for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv']:
+            getattr(xs3, channel).kind = 'normal'
+        dets = [xs3, ring_curr]
     else:
         dets = [sclr, norm_ch4, ring_curr]
 

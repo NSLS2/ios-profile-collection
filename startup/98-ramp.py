@@ -89,6 +89,10 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     if specs in dets:
         specs.stage()
 
+    for det in dets:
+        if det.name == "xs3":
+            det.stage()
+
     # TODO do this with stage
     old_db = epu1.flt.output_deadband.get()
     yield from bps.abs_set(epu1.flt.output_deadband, deadband)
@@ -122,8 +126,8 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         st = StatusBase()
         enum_map = pgm.fly.scan_status.describe()[pgm.fly.scan_status.name]['enum_strs']
         def _done_cb(value, old_value, **kwargs):
-            print(f'Old value {old_value} -> new value {value}')
-            print(f'Old value type {type(old_value)} -> new value {type(value)}')
+            # print(f'Old value {old_value} -> new value {value}')
+            # print(f'Old value type {type(old_value)} -> new value {type(value)}')
             try:
                 old_value = enum_map[int(old_value)]
             except (TypeError, ValueError):
@@ -147,7 +151,7 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     def inner_plan():
         yield from trigger_and_read(dets, name=streamname)
 
-    print(md)
+    # print(md)
     rp = ramp_plan(go_plan(), pgm.energy,
                    inner_plan, period=None, md=md)
 

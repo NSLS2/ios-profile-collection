@@ -1,5 +1,3 @@
-print(f'Loading {__file__}...')
-
 import os
 import datetime
 from ophyd import Component as Cpt
