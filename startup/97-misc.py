@@ -188,11 +188,11 @@ def plot_norm_xas(scanid1,scanid2,label,scan_type='TEY',normto1='Y'):
                 if ((scan_type == 'TEY') or (scan_type == 'tey')):
                        df1['Norm'] = df1['sclr_ch4']/df1['sclr_ch3']
                 elif ((scan_type == 'PFY') or (scan_type == 'pfy')):
-                       df1['Norm'] = df1['vortex_mca_rois_roi4_count']/df1['sclr_ch3']
+                       df1['Norm'] = df1['PFY']/df1['sclr_ch3']
                 elif ((scan_type == 'TFY') or (scan_type == 'tfy')):
-                       df1['Norm'] = df1['vortex_mca_rois_roi1_count']/df1['sclr_ch3']
+                       df1['Norm'] = df1['TFY']/df1['sclr_ch3']
                 elif ((scan_type == 'IPFY') or (scan_type == 'ipfy')):
-                       df1['Norm'] = 1/(df1['vortex_mca_rois_roi3_count']/df1['sclr_ch3'])
+                       df1['Norm'] = 1/(df1['IPFY']/df1['sclr_ch3'])
                 elif ((scan_type == 'PEY') or (scan_type == 'pey')):
                        df1['Norm'] = df1['specs_count']/df1['sclr_ch3']
 

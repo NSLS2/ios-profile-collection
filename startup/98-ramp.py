@@ -117,6 +117,10 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         if specs in dets:
             specs.unstage()
 
+        for det in dets:
+            if det.name == "xs3":
+                det.unstage()
+
     # change to track the readout energy
     yield from change_epu_flt_link(pgm_energy.readback.pvname)
 
