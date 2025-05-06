@@ -4,6 +4,9 @@
 from datetime import datetime
 from ophyd.signal import EpicsSignalBase, EpicsSignal, DEFAULT_CONNECTION_TIMEOUT
 
+import redis
+from redis_json_dict import RedisJSONDict
+
 def print_now():
     return datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S.%f')
 
@@ -86,6 +89,9 @@ from bluesky.callbacks.mpl_plotting import plot_peak_stats
 
 
 # Set up default metadata.
+
+RE.md = RedisJSONDict(redis.Redis("info.ios.nsls2.bnl.gov", 6379), prefix="")
+
 RE.md['group'] = ''
 RE.md['config'] = {}
 RE.md['beamline_id'] = 'IOS'
@@ -222,5 +228,8 @@ except ImportError:
 runengine_metadata_dir = appdirs.user_data_dir(appname="bluesky") / Path("runengine-metadata")
 
 # PersistentDict will create the directory if it does not exist
-RE.md = PersistentDict(runengine_metadata_dir)
+
+# _md = PersistentDict(runengine_metadata_dir)
+# RE.md.update(_md)
+
 
