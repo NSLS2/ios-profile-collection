@@ -80,7 +80,6 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
                        'motors': [pgm.energy.name]})
     # put the energy at the starting value
     yield from bps.abs_set(pgm.energy, start, wait=True)
-
     yield from bps.abs_set(pgm.fly.start_sig, start, wait=True)
     yield from bps.abs_set(pgm.fly.stop_sig, stop, wait=True)
     yield from bps.abs_set(pgm.fly.velocity, velocity, wait=True)

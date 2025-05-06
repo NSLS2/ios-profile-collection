@@ -16,8 +16,11 @@ class QT_Scan_GUI(QMainWindow):
 
         ########### RE STOP FUNCTION ###########
         def stop_button_action():
-            bluesky_ui_logger.bs_ui_log("RE.stop()")
             RE.stop()
+           # bluesky_ui_logger.bs_ui_log("RE.stop()")
+           # self.RE.stop()
+           # self.RE.state == 'stop'
+           # self.RE.is_stopped = True
 
         def pdxasscan_button_action():
             sui_start = self.pdxas_start_lineEdit.text() 

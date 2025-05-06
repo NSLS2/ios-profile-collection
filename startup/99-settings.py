@@ -301,7 +301,7 @@ def load_all_excel():
 #                            'mca.rois.roi4.hi_chan': 800},
 #}
 
-def XAS_edge_scan(edge, md=None):
+def XAS_edge_scan(sample_name, edge, md=None):
     '''Run a multi-edge nexafs scan for single sample and edge
 
     Parameters
@@ -326,9 +326,9 @@ def XAS_edge_scan(edge, md=None):
     e_scan_params = EDGE_MAP[edge]
     # TODO configure the vortex
     det_settings = DET_SETTINGS[edge]
-#    sample_props = SAMPLE_MAP[sample_name]
+    sample_props = SAMPLE_MAP[sample_name]
 #    sample_props = list(sample_manager.find(name=sample_name))
-#    local_md.update(sample_props)
+    local_md.update(sample_props)
 
     # init_group = 'ME_INIT_' + str(uuid.uuid4())
 #    yield from bps.abs_set(ioxas_x, sample_props['pos'], wait=True)
@@ -339,11 +339,11 @@ def XAS_edge_scan(edge, md=None):
     yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
     yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
     yield from bps.sleep(15)
-#    yield from bps.abs_set(m1b1_fp, 100)
-    yield from bps.abs_set(feedback, 1, wait=True)
+    yield from bps.abs_set(m1b1_fp, 186.1)
+#    yield from bps.abs_set(feedback, 1, wait=True)
     yield from bps.sleep(5)
 #    yield from bps.abs_set(feedback, 0, wait=True)
-#    yield from bps.abs_set(vortex_x, det_settings['vortex_pos'], wait=True)
+    yield from bps.abs_set(vortex_x, det_settings['vortex_pos'], wait=True)
     yield from bps.abs_set(sample_sclr_gain, det_settings['samplegain'], wait=True)
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_gain, det_settings['aumeshgain'], wait=True)
@@ -363,42 +363,32 @@ def XAS_edge_scan(edge, md=None):
 
 #    yield from bps.configure(vortex, VORTEX_SETTINGS[edge])
 #    yield from bps.sleep(2)
-    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+# Using the blue box for PFY:
+#    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
+# Using the Xpress3 for PFY:
+    yield from bps.abs_set(xs3.channel01.mcaroi04.min_x, det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi04.size_x, det_settings['vortex_high']-det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.min_x, det_settings['IPFY_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.size_x, det_settings['IPFY_high']-det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, det_settings['aumeshdecade'], wait=True)
 
-#    lp_list = []
-#    for n in ['sclr_ch4', 'vortex_mca_rois_roi4_count']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-
-#    class norm_plot(bs.callbacks.LivePlot):
-#        def event(self,doc):
-#            try:
-#                doc.data['norm_intensity'] = doc.data['sclr_ch4']/doc.data['sclr_ch3']
-#            except KeyError:
-#                pass
-#            super().event(doc)
-
-#    for n in ['sclr_ch4']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp = norm_plot('norm_intensity', 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-    dets = [sclr, vortex, norm_ch4, ring_curr]
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-            getattr(vortex, channel).kind = 'hinted'
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-            getattr(vortex, channel).kind = 'normal'
+    dets = [sclr, xs3, norm_ch4, ring_curr]
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
+            getattr(xs3, channel).kind = 'hinted'
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv']:
+            getattr(xs3, channel).kind = 'normal'
     for channel in ['channels.chan2','channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'hinted'
-#    for channel in ['channels.chan2']:
-#        getattr(sclr, channel).kind = 'normal'
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'normal'
 
    
     scan_kwargs = {'start': e_scan_params['stop'],
@@ -415,36 +405,22 @@ def XAS_edge_scan(edge, md=None):
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
         yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
         yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-        yield from bps.sleep(15)
-#       yield from bps.abs_set(m1b1_fp, 100)
-        yield from bps.abs_set(feedback, 1, wait=True)
+        yield from bps.sleep(5)
+        yield from bps.abs_set(m1b1_fp, 186.1)
+#        yield from bps.abs_set(feedback, 1, wait=True)
         yield from bps.sleep(5)
 #        yield from bps.abs_set(feedback, 0, wait=True)
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
         yield from open_all_valves(all_valves)
         res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
-#        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
-#        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
+        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
+        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
         yield from bps.sleep(5)
         if res is None:
             res = []
         ret.extend(res)
         if not ret:
             return ret
-
-
-    # hdr = db[ret[0]]
-    # redo_count = how_many_more_times_to_take_data(hdr)
-    # for j in range(redo_count):
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
-
-
-    # new_count_time = compute_new_count_time(hdr, old_count_time)
-    # if new_count_time != old_count_time:
-    #     yield from bps.configure(vortex, {'count_time': new_count_time})
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
 
     return ret
 
@@ -494,11 +470,29 @@ def edge_ascan(sample_name, edge, md=None):
     yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
     yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
     yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-    yield from bps.sleep(15)
-#    yield from bps.abs_set(m1b1_fp, 100)
+    yield from bps.sleep(30)
+
+##   FOR USING BEAM POSITION ON DIAG2 YAG ##
+#    yield from bps.abs_set(m1b1_fp, 150, wait=True)
+#    yield from bps.abs_set(feedback, 1, wait=True)
+#    yield from bps.sleep(5)
+#    yield from bps.abs_set(feedback, 0, wait=True)
+
+##  FOR USING BEAM POSITION WITH FIXED M1B1 FINE PITCH ##
+#    yield from bps.abs_set(m1b1_fp, e_scan_params['m1b1_fp'], wait=True)
+#    yield from bps.sleep(5)
+
+##  FOR USING BEAM POSITION WITH FIXED M1B1 SETPOINT  ##
+    yield from bps.abs_set(m1b1_setpoint, e_scan_params['m1b1_sp'], wait=True)
     yield from bps.abs_set(feedback, 1, wait=True)
     yield from bps.sleep(5)
+    yield from bps.abs_set(feedback, 0, wait=True)
+
+##  FOR USING BEAM POSITION USING M1B1 COARSE PITCH  ##
 #    yield from bps.abs_set(feedback, 0, wait=True)
+#    yield from cp_align(e_scan_params['m1b1_sp'], 0.004)
+#    yield from bps.sleep(5)
+
     yield from bps.abs_set(vortex_x, det_settings['vortex_pos'], wait=True)
     yield from bps.abs_set(sample_sclr_gain, det_settings['samplegain'], wait=True)
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
@@ -517,50 +511,48 @@ def edge_ascan(sample_name, edge, md=None):
     # TODO make this an ohypd obj!!!!!!
     # TODO ask stuart
     #caput('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_POS_SP',50)
-    yield from bps.sleep(5)
+#    yield from bps.sleep(5)
 
 #    yield from bps.configure(vortex, VORTEX_SETTINGS[edge])
 #    yield from bps.sleep(2)
-    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
+# Using the Xpress3 for PFY:
+    yield from bps.abs_set(xs3.channel01.mcaroi04.min_x, det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi04.size_x, det_settings['vortex_high']-det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.min_x, det_settings['IPFY_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.size_x, det_settings['IPFY_high']-det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, det_settings['aumeshdecade'], wait=True)
     yield from bps.abs_set(pd_sclr_decade, det_settings['pd_decade'], wait=True)
 
+#    dets = [sclr, vortex, norm_ch4, ring_curr]
+#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
+#            getattr(vortex, channel).kind = 'hinted'
+#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+#            getattr(vortex, channel).kind = 'normal'
+#    for channel in ['channels.chan3','channels.chan4']:
+#        getattr(sclr, channel).kind = 'hinted'
+#    for channel in ['channels.chan2']:
+#        getattr(sclr, channel).kind = 'normal'
 
-#    lp_list = []
-#    for n in ['sclr_ch4', 'vortex_mca_rois_roi4_count']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-
-#    class norm_plot(bs.callbacks.LivePlot):
-#        def event(self,doc):
-#            try:
-#                doc.data['norm_intensity'] = doc.data['sclr_ch4']/doc.data['sclr_ch3']
-#            except KeyError:
-#                pass
-#            super().event(doc)
-
-#    for n in ['sclr_ch4']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp = norm_plot('norm_intensity', 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-    dets = [sclr, vortex, norm_ch4, ring_curr]
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-            getattr(vortex, channel).kind = 'hinted'
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-            getattr(vortex, channel).kind = 'normal'
-    for channel in ['channels.chan3','channels.chan4']:
+# Using the Xpress3 with the Vortex:
+    dets = [sclr, xs3, norm_ch4, ring_curr]
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
+        getattr(xs3, channel).kind = 'hinted'
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv']:
+        getattr(xs3, channel).kind = 'normal'
+    for channel in ['channels.chan2','channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'hinted'
     for channel in ['channels.chan2']:
         getattr(sclr, channel).kind = 'normal'
 
-   
     scan_kwargs = {'start': e_scan_params['stop'],
                    'stop': e_scan_params['start'],
                    'velocity': e_scan_params['velocity'],
@@ -575,13 +567,31 @@ def edge_ascan(sample_name, edge, md=None):
         yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
         yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
         yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-        yield from bps.sleep(15)
-#       yield from bps.abs_set(m1b1_fp, 100)
+        yield from bps.sleep(10)
+
+###   FOR USING BEAM POSITION ON DIAG2 YAG ##
+    #    yield from bps.abs_set(m1b1_fp, 150, wait=True)
+    #    yield from bps.abs_set(feedback, 1, wait=True)
+    #    yield from bps.sleep(5)
+    #    yield from bps.abs_set(feedback, 0, wait=True)
+
+##  FOR USING BEAM POSITION WITH FIXED M1B1 FINE PITCH ##
+#        yield from bps.abs_set(m1b1_fp, e_scan_params['m1b1_fp'], wait=True)
+#        yield from bps.sleep(5)
+
+##  FOR USING BEAM POSITION WITH FIXED M1B1 SETPOINT ##
+        yield from bps.abs_set(m1b1_setpoint, e_scan_params['m1b1_sp'], wait=True)
         yield from bps.abs_set(feedback, 1, wait=True)
         yield from bps.sleep(5)
         yield from bps.abs_set(feedback, 0, wait=True)
+
+##  FOR USING BEAM POSITION USING M1B1 COARSE PITCH  ##
+#        yield from bps.abs_set(feedback, 0, wait=True)
+#        yield from cp_align(e_scan_params['m1b1_sp'], 0.004)
 #        yield from bps.sleep(5)
+
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
+#        yield from bps.sleep(20)
         yield from open_all_valves(all_valves)
 #        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
 #        yield from bps.sleep(10)
@@ -595,20 +605,6 @@ def edge_ascan(sample_name, edge, md=None):
         ret.extend(res)
         if not ret:
             return ret
-
-
-    # hdr = db[ret[0]]
-    # redo_count = how_many_more_times_to_take_data(hdr)
-    # for j in range(redo_count):
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
-
-
-    # new_count_time = compute_new_count_time(hdr, old_count_time)
-    # if new_count_time != old_count_time:
-    #     yield from bps.configure(vortex, {'count_time': new_count_time})
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
 
     return ret
 
@@ -653,7 +649,7 @@ def edge_stepscan(sample_name, edge, md=None):
     yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
     yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
     yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-    yield from bps.sleep(25)
+    yield from bps.sleep(40)
 #    yield from bps.abs_set(m1b1_fp, 100)
     yield from bps.abs_set(feedback, 1, wait=True)
     yield from bps.sleep(5)
@@ -680,47 +676,44 @@ def edge_stepscan(sample_name, edge, md=None):
 
 #    yield from bps.configure(vortex, VORTEX_SETTINGS[edge])
 #    yield from bps.sleep(2)
-    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
-    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
-    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
+# Using the Xpress3 for PFY:
+    yield from bps.abs_set(xs3.channel01.mcaroi04.min_x, det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi04.size_x, det_settings['vortex_high']-det_settings['vortex_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.min_x, det_settings['IPFY_low'], wait=True)
+    yield from bps.abs_set(xs3.channel01.mcaroi03.size_x, det_settings['IPFY_high']-det_settings['IPFY_low'], wait=True)
+#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
+
     yield from bps.abs_set(sample_sclr_decade, det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, det_settings['aumeshdecade'], wait=True)
     yield from bps.abs_set(pd_sclr_decade, det_settings['pd_decade'], wait=True)
 
+#    dets = [sclr, vortex, norm_ch4, ring_curr]
+#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
+#            getattr(vortex, channel).kind = 'hinted'
+#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
+#            getattr(vortex, channel).kind = 'normal'
+#    for channel in ['channels.chan3','channels.chan4']:
+#        getattr(sclr, channel).kind = 'hinted'
+#    for channel in ['channels.chan2']:
+#        getattr(sclr, channel).kind = 'normal'
 
-#    lp_list = []
-#    for n in ['sclr_ch4', 'vortex_mca_rois_roi4_count']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-
-#    class norm_plot(bs.callbacks.LivePlot):
-#        def event(self,doc):
-#            try:
-#                doc.data['norm_intensity'] = doc.data['sclr_ch4']/doc.data['sclr_ch3']
-#            except KeyError:
-#                pass
-#            super().event(doc)
-
-#    for n in ['sclr_ch4']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp = norm_plot('norm_intensity', 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-    dets = [sclr, vortex, norm_ch4, ring_curr]
-#    dets = [sclr, norm_ch4, ring_curr]
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-            getattr(vortex, channel).kind = 'hinted'
-    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-            getattr(vortex, channel).kind = 'normal'
-    for channel in ['channels.chan3','channels.chan4']:
+# Using the Xpress3 with the Vortex:
+    dets = [sclr, xs3, norm_ch4, ring_curr]
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
+        getattr(xs3, channel).kind = 'hinted'
+    for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv']:
+        getattr(xs3, channel).kind = 'normal'
+    for channel in ['channels.chan2','channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'hinted'
     for channel in ['channels.chan2']:
         getattr(sclr, channel).kind = 'normal'
 
-   
     scan_kwargs = {'start': e_scan_params['stop'],
                    'stop': e_scan_params['start'],
                    'velocity': e_scan_params['velocity'],
@@ -757,20 +750,6 @@ def edge_stepscan(sample_name, edge, md=None):
         ret.extend(res)
         if not ret:
             return ret
-
-
-    # hdr = db[ret[0]]
-    # redo_count = how_many_more_times_to_take_data(hdr)
-    # for j in range(redo_count):
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
-
-
-    # new_count_time = compute_new_count_time(hdr, old_count_time)
-    # if new_count_time != old_count_time:
-    #     yield from bps.configure(vortex, {'count_time': new_count_time})
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
 
     return ret
 
@@ -842,13 +821,6 @@ def pey_edge_ascan(sample_name, edge, md=None):
     #caput('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_POS_SP',50)
     yield from bps.sleep(5)
 
-#    yield from bps.configure(vortex, VORTEX_SETTINGS[edge])
-#    yield from bps.sleep(2)
-#    yield from bps.abs_set(vortex.mca.rois.roi4.lo_chan, det_settings['vortex_low'], wait=True)
-#    yield from bps.abs_set(vortex.mca.rois.roi4.hi_chan, det_settings['vortex_high'], wait=True)
-#    yield from bps.abs_set(vortex.mca.rois.roi3.lo_chan, det_settings['IPFY_low'], wait=True)
-#    yield from bps.abs_set(vortex.mca.rois.roi3.hi_chan, det_settings['IPFY_high'], wait=True)
-#    yield from bps.abs_set(vortex.mca.preset_real_time, det_settings['vortex_time'], wait=True)
     yield from bps.abs_set(sample_sclr_decade, pey_det_settings['sampledecade'], wait=True)
     yield from bps.abs_set(aumesh_sclr_decade, pey_det_settings['aumeshdecade'], wait=True)
     yield from bps.abs_set(pd_sclr_decade, pey_det_settings['pd_decade'], wait=True)
@@ -859,34 +831,7 @@ def pey_edge_ascan(sample_name, edge, md=None):
     yield from bps.abs_set(specs.cam.lens_mode, 0, wait=True)
 
 
-
-
-
-
-#    lp_list = []
-#    for n in ['sclr_ch4', 'vortex_mca_rois_roi4_count']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
-
-#    class norm_plot(bs.callbacks.LivePlot):
-#        def event(self,doc):
-#            try:
-#                doc.data['norm_intensity'] = doc.data['sclr_ch4']/doc.data['sclr_ch3']
-#            except KeyError:
-#                pass
-#            super().event(doc)
-
-#    for n in ['sclr_ch4']:
-#        fig = plt.figure(edge + ': ' + n)
-#        lp = bs.callbacks.LivePlot(n, 'pgm_energy_readback', fig=fig)
-#        lp = norm_plot('norm_intensity', 'pgm_energy_readback', fig=fig)
-#        lp_list.append(lp)
     dets = [specs, sclr, norm_ch4, ring_curr]
-#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count','mca.rois.roi4.count']:
-#            getattr(vortex, channel).kind = 'hinted'
-#    for channel in ['mca.rois.roi2.count','mca.rois.roi3.count']:
-#            getattr(vortex, channel).kind = 'normal'
     for channel in ['channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'hinted'
     for channel in ['channels.chan2']:
@@ -929,25 +874,7 @@ def pey_edge_ascan(sample_name, edge, md=None):
         if not ret:
             return ret
 
-
-    # hdr = db[ret[0]]
-    # redo_count = how_many_more_times_to_take_data(hdr)
-    # for j in range(redo_count):
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
-
-
-    # new_count_time = compute_new_count_time(hdr, old_count_time)
-    # if new_count_time != old_count_time:
-    #     yield from bps.configure(vortex, {'count_time': new_count_time})
-    #     res = yield from bpp.subs_wrapper(ascan(*scan_args, md=md), lp)
-    #     ret.extend(res)
-
     return ret
-
-#def how_many_more_times_to_take_data(hdr):
-#    table = db.get_table()
-#    return int(15 // (table.sclr2.max() / table.sclr2.min()))
 
 def pass_filter(sample_name, edge):
     return edge in SAMPLE_MAP[sample_name]['interesting_edges']
@@ -1002,13 +929,16 @@ def multi_pey_edge(*, edge_list=None, sample_list=None):
 
 
 
-def multi_edge(*, edge_list=None):
+def multi_edge(*, edge_list=None, sample_list=None):
+    if sample_list is None:
+        sample_list = list(SAMPLE_MAP)
     if edge_list is None:
         edge_list = list(EDGE_MAP)
 #    edge_list = sorted(edge_list, key=lambda k: EDGE_MAP[k]['start'])
-    cy = cycler('edge', edge_list)
+    cy = cycler('edge', edge_list) * cycler('sample_name', sample_list)
     for inp in cy:
-       yield from XAS_edge_scan(**inp)
+        if pass_filter(**inp):
+            yield from XAS_edge_scan(**inp)
     yield from bps.abs_set(valve_diag3_close, 1)
     yield from bps.abs_set(valve_mir3_close, 1)
 
@@ -1060,12 +990,11 @@ def finish_XAS():
 #        f.close()
 
 def save_csv(edge, stop_doc):
-    required_columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi4_count', 'vortex_mca_rois_roi3_count']
+#    required_columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi4_count', 'vortex_mca_rois_roi3_count']
+    required_columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY']
     h = db[stop_doc['run_start']]
     df = db.get_table(h)
     fn = '{name}_{edge}_{scan_id}.csv'.format(**h.start)
-#    fn = '{edge}_{scan_id}.csv'.format(**h.start)
-
 
     # verify the required columns are there
     in_list = True
@@ -1119,3 +1048,26 @@ def save_pey_csv(edge, stop_doc):
 #    file_name = fn_template.format(**hdr['start'])
 #    table.to_csv(file_name, index=False)
 #    print('saved CVS to: {!r}'.format(file_name))
+
+## Test
+def cp_align(centroid, jog):
+
+    counter = 0
+    yield from bps.abs_set(m1b1_cp_jog_sp, jog, wait=True)
+    centroid_rb = yag_centroid.read()['yag_centroid']['value']
+
+    while (abs(centroid-centroid_rb) > 3.0):
+        if (centroid_rb-centroid) > 1.0:
+            yield from bps.abs_set(m1b1_cp_jog_ng, 1, wait=True)
+            yield from bps.abs_set(m1b1_cp_mv, 1, wait=True)
+            yield from bps.sleep(3)
+        else:
+            yield from bps.abs_set(m1b1_cp_jog_ps, 1, wait=True)
+            yield from bps.abs_set(m1b1_cp_mv, 1, wait=True)
+            yield from bps.sleep(3)
+        centroid_rb = yag_centroid.read()['yag_centroid']['value']
+
+        counter = counter + 1
+        if counter>10:
+            break
+

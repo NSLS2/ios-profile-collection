@@ -300,7 +300,7 @@ class QT_Plot_GUI(QMainWindow):
         self.custom_y_comboBox.activated.connect(custom_y_combobox_action)
 
         yval_dict = {"Photodiode": "sclr_ch2", "Au Mesh" : "sclr_ch3", "Sample TEY" : "sclr_ch4",
-        "Sample PFY": "vortex_mca_rois_roi4_count", "Sample PEY": "specs_count"}
+        "Sample PFY": "PFY", "Sample PEY": "specs_count"}
 
         xval_dict = {"Time" : "time", "Photon Energy" : "pgm_energy_readback", "EPU1 Gap" : "epu1_gap_readback", "Au Mesh" : "au_mesh",
         "IOXAS Sample" : "ioxas_x", "Diagnostic" : "diag3_y", "Exit Slit" : "slt2", "Beam Position" : "m1b1_setpoint"}

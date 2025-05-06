@@ -173,5 +173,15 @@ appes_t = EpicsMotor('XF:23ID2-ES{APPES:1-Ax:R}Mtr', name='appes_t')
 #Mirror
 
 m3b_pitch = EpicsSignal('XF:23ID2-OP{Mir:3B-Ax:Pit}Mtr_POS_SP', name='m3b_pitch')
+yag_centroid = EpicsSignal('XF:23ID2-BI{ExitSlt-Cam:1}Stats1:CentroidX_RBV', name='yag_centroid')
 m1b1_fp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_POS_SP', name='m1b1_fp')
+m1b1_fp_rb = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:FPit}Mtr_MON', name='m1b_fp_rb')
 m1b1_setpoint = EpicsSignal('XF:23ID2-OP{FBck}PID-SP' , name='m1b1_setpoint')
+m1b1_cp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_POS_SP', name='m1b1_cp')
+m1b1_cp_rb = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_MON', name='m1b1_cp_rb')
+m1b1_cp_mv = EpicsSignal('XF:23IDA-OP:2{Mir:1A}MOVE_CMD.PROC', name='m1b1_cp_mv')
+m1b1_cp_jog_ng = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWN_CMD.PROC', name='m1b1_cp_jog_ng')
+m1b1_cp_jog_ps = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWP_CMD.PROC', name='m1b1_cp_jog_ps')
+m1b1_cp_jog_sp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWV_SP', name='m1b1_cp_jog_sp')
+
+

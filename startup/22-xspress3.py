@@ -14,7 +14,7 @@ def now():
 
 
 xs3_pv_prefix = "XF:23ID2-ES{Xsp:1}:"
-xs3_root_path = "/nsls2/data/ios/legacy/xspress3_data"
+xs3_root_path = "/nsls2/data3/ios/legacy/xspress3_data"
 xs3_data_dir = os.path.join(xs3_root_path, "%Y/%m/%d")
 
 xspress3_class = build_xspress3_class(
@@ -45,4 +45,9 @@ for channel in xs3.iterate_channels():
     for mcaroi in channel.iterate_mcarois():
         mcaroi.kind = "hinted"
         mcaroi.total_rbv.kind = "hinted"
-        mcaroi.total_rbv.name = mcaroi.roi_name.get()
+        _roi_name = mcaroi.roi_name.get()
+        if _roi_name:
+            mcaroi.total_rbv.name = _roi_name
+        else:
+            mcaroi.total_rbv.name = f"{mcaroi.name}_roi"
+            print(f"No PV set for {mcaroi.roi_name.name}, setting default name for total_rbv for {mcaroi.name}")
