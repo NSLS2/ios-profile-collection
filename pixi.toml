@@ -27,6 +27,8 @@ ply = ">=3.11,<4"
 colorlog = ">=6.9.0,<7"
 epicscorelibs = "*"
 pydantic-numpy = "*"
+pyqt = "<6"
+amostra = ">=1.0.1,<2"
 
 
 [feature.profile.pypi-dependencies]
