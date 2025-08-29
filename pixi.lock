@@ -24,7 +24,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/alabaster-1.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/alembic-1.16.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/alsa-lib-1.2.14-hb9d3cd8_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.0-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.10.0-pyhe01879c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aom-3.9.1-hac33072_0.conda
@@ -622,7 +622,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/alabaster-1.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/alembic-1.16.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/alsa-lib-1.2.14-hb9d3cd8_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.0-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.10.0-pyhe01879c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aom-3.9.1-hac33072_0.conda
@@ -1389,9 +1389,9 @@ packages:
   purls: []
   size: 566531
   timestamp: 1744668655747
-- conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.1-pyhd8ed1ab_0.tar.bz2
-  sha256: e876aa1d914d4aec27ae5a923f5af0b038b367d319c77533db62567557644ec3
-  md5: 4b671d6c573eb8d452f69dde010089b7
+- conda: https://conda.anaconda.org/conda-forge/noarch/amostra-1.0.0-pyhd8ed1ab_0.tar.bz2
+  sha256: 837ebdb24dbe1361c0e916f89326722f69f88c3dbbc30abc249f8a242caa80b0
+  md5: 9ca481b99ddc534c2ff50bb25b62c0b4
   depends:
   - doct
   - jsonschema
@@ -1406,8 +1406,8 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/amostra?source=hash-mapping
-  size: 15380
-  timestamp: 1626196620184
+  size: 21163
+  timestamp: 1624700488101
 - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
   sha256: e0ea1ba78fbb64f17062601edda82097fcf815012cf52bb704150a2668110d48
   md5: 2934f256a8acfe48f6ebb4fce6cde29c
