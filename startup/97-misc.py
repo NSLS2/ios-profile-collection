@@ -1,6 +1,7 @@
 from time import sleep
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 
 
 def user_checkin():
@@ -25,16 +26,16 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
     for scanid in range(first_id,last_id+1,1):
         if exptype == 'normal':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Kotaro/Sep2024/Fe2O3_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY'], index=True)
+            df.to_csv('~/User_Data/Northrup/Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'ring_curr', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY'], index=True)
         elif exptype == 'PD':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/Carbon_contamination/Nov2024/Photodiode_C_K1_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
+            df.to_csv('~/User_Data/Hunt/Carbon_contamination/Jul2025/Photodiode_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
         elif exptype == 'es':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Comm/ExitSlit_C_K1_%d.csv' % scanid, columns=['slt2', 'sclr_ch2'], index=False)
         elif exptype == 'PEY':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Yildiz_Group_XAS/Mar2025/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'time', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
+            df.to_csv('~/User_Data/Wang/April2026/PEY_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'ring_curr', 'time', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'specs_count'], index=False)
         elif exptype == 'stability':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Hunt/Carbon_contamination/May2024/Stability_%d.csv' % scanid, columns=['time', 'ring_curr', 'epu2_gap_readback', 'epu2_phase_readback', 'epu1_gap_readback', 'm1b_fp_rb', 'yag_centroid', 'sclr_ch2'], index=False)
@@ -48,6 +49,13 @@ def save_xas_csv_short(first_id, last_id):
                 #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
 #                df.to_csv('~/User_Data/Hunt/Carbon_contamination/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3'])
                 df.to_csv('~/User_Data/May/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'])
+
+def save_bdc(first_id, last_id):
+        for scanid in range(first_id,last_id+1,1):
+                df = db.get_table(db[scanid])
+                #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
+#                df.to_csv('~/User_Data/Hunt/Carbon_contamination/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3'])
+                df.to_csv('~/User_Data/Comm/INSPIRE/BDC_Focus/Scan_%d.csv' % scanid, columns=['bdc_z', 'sclr_ch2'])
 
 def save_all(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
@@ -349,6 +357,42 @@ def plot_avg_async_xas(scanid1,scanid2,normid1,normid2,label,scan_type='TEY',nor
 
         I1sum.plot(x = 'pgm_energy_readback', y = 'Avg', label = str(i), ax=label)
 
+def plot_avg_async_au(scanid1,scanid2,normid1,normid2,label,normto1='Y',factor=1):
+        plt.figure(label)
+        label = plt.gca()
+
+        I0sum = db.get_table(db[normid1])
+        I0sum['Avg'] = I0sum['sclr_ch2']-I0sum['sclr_ch2']
+        denom = 0
+        for i in range (normid1, normid2+1):
+                dfn = db.get_table(db[i])
+                denom = denom + 1
+                I0sum['Avg'] = I0sum['Avg'] + dfn['sclr_ch2']
+
+
+        I0sum['Avg'] = I0sum['Avg']/denom
+
+        I1sum = db.get_table(db[scanid1])
+        I1sum['Avg'] = I1sum['sclr_ch4']-I1sum['sclr_ch4']
+        denom = 0
+        for i in range (scanid1, scanid2+1):
+                df1 = db.get_table(db[i])
+                df1['Norm'] = df1['sclr_ch3']/I0sum['Avg']
+
+                denom = denom + 1
+                I1sum['Avg'] = I1sum['Avg'] + df1['Norm']
+
+        I1sum['Avg'] = I1sum['Avg']/denom
+
+        if (normto1 == 'Y' or normto1 == 'y' or normto1 == 'yes' or normto1 == 'YES'):
+                I1sum['Avg'] = I1sum['Avg']-min(I1sum['Avg'])
+                I1sum['Avg'] = I1sum['Avg']/max(I1sum['Avg'])
+        elif (normto1 == 'N' or normto1 == 'n' or normto1 == 'NO' or normto1 == 'no'):
+                I1sum['Avg'] = I1sum['Avg']*factor
+
+        I1sum.plot(x = 'pgm_energy_readback', y = 'Avg', label = str(i), ax=label)
+
+
 def plot_avg_raw_xas(scanid1,scanid2,label,scan_type='TEY',normto1='Y'):
         plt.figure(label)
         label = plt.gca()
@@ -442,6 +486,93 @@ def plot_raw_xas(scanid1,scanid2,label,scan_type='TEY',normto1='Y'):
                        df1['Raw'] = df1['Raw']/max(df1['Raw'])
 
                 df1.plot(x = 'pgm_energy_readback', y = 'Raw', label = str(i), ax=label)
+"""
+
+def gaussian(x, a, x0, sigma, c):
+    return a * np.exp(-(x - x0)**2 / (2 * sigma**2)) + c
+
+def plot_1stderiv(scanid1,scanid2,label,axis):
+        plt.figure(label)
+        label = plt.gca()
+        for i in range (scanid1, scanid2+1):
+             # First calculate the first derivative
+             func = db.get_table(db[i])
+             if axis == 'vert':
+                   x_axis = func['bdc_y']
+             elif axis == 'horz':
+                   x_axis = func['bdc_z']
+             elif axis == 'dm1_x':
+                   x_axis = func['dm1_x']
+             dx = x_axis[2]-x_axis[1]
+             func['deriv'] = np.gradient(func['sclr_ch2'],dx)
+
+             # Now fit a Gaussian to the first derivative
+             init_max = max(func['deriv'])
+             init_sigma = 0.005
+             init_min = 0
+
+             if axis == 'vert':
+                  init_center = func['bdc_y'][np.argmax(func['deriv'])]
+                  init_guess = [init_max, init_center, init_sigma, init_min]
+                  popt,pcov = curve_fit(gaussian, func['bdc_y'], func['deriv'], p0 = init_guess)
+                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+
+
+                  # Plet everything together
+                  func['gaussian'] = gaussian(func['bdc_y'], *popt)
+                  func.plot(x = 'bdc_y', y = 'deriv', label = str(i), ax=label)
+                  func.plot(x = 'bdc_y', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
+
+             elif axis == 'horz':
+                  init_center = func['bdc_z'][np.argmax(func['deriv'])]
+                  init_guess = [init_max, init_center, init_sigma, init_min]
+                  popt,pcov = curve_fit(gaussian, func['bdc_z'], func['deriv'], p0 = init_guess)
+                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+
+                  # Plet everything together
+                  func['gaussian'] = gaussian(func['bdc_z'], *popt)
+                  func.plot(x = 'bdc_z', y = 'deriv', label = str(i), ax=label)
+                  func.plot(x = 'bdc_z', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
+
+             elif axis == 'dm1_x':
+                  init_center = func['dm1_x'][np.argmax(func['deriv'])]
+                  init_guess = [init_max, init_center, init_sigma, init_min]
+                  popt,pcov = curve_fit(gaussian, func['dm1_x'], func['deriv'], p0 = init_guess)
+                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+
+                  # Plet everything together
+                  func['gaussian'] = gaussian(func['dm1_x'], *popt)
+                  func.plot(x = 'dm1_x', y = 'deriv', label = str(i), ax=label)
+                  func.plot(x = 'dm1_x', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
+
+
+def plot_gaussian_fit(scanid1,scanid2,label,axis):
+        plt.figure(label)
+        label = plt.gca()
+        for i in range (scanid1, scanid2+1):
+             func = db.get_table(db[i])
+             init_max = max(func['sclr_ch2'])
+             init_sigma = 0.1
+             init_min = 0
+
+             if axis == 'dm1_x':
+                  init_center = func['dm1_x'][np.argmax(func['sclr_ch2'])]
+                  init_guess = [init_max, init_center, init_sigma, init_min]
+                  popt,pcov = curve_fit(gaussian, func['dm1_x'], func['sclr_ch2'], p0 = init_guess)
+                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+                  #print("The centroid for scan ID", i, "is:", round(popt[1],4), "mm.")
+                  #print("The maximum for scan ID", i, "is:", round(popt[0],4), "counts.")
+                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+
+                  # Plot everything together
+                  func['gaussian'] = gaussian(func['dm1_x'], *popt)
+                  func.plot(x = 'dm1_x', y = 'sclr_ch2', label = str(i), ax=label)
+                  func.plot(x = 'dm1_x', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
+
+"""
 
 def time_scan(det_list):
 #    old_hints_vortex = save_hint_state(vortex)
@@ -699,7 +830,7 @@ def PEY_init(kinE, passE, dwell):
     yield from bps.abs_set(specs.cam.lens_mode, 0)
 
 def PEY_XAS_scan(e_start, e_finish, velocity, deadband):
-    dets = [specs, sclr]
+    dets = [specs, sclr, ring_curr]
     # dets = [sclr, norm_ch4, ring_curr]
 
     for channel in ['channels.chan3','channels.chan4']:
@@ -868,8 +999,99 @@ def epu_gap_scans():
     yield from bps.abs_set(valve_mir3_close, 1, wait=True)
     yield from bps.mov(diag3_y, 49) 
 
+"""
+
+def bdc_z_scan():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+#   1st order horizontal
+    
+    kbh_roll = -800
+    while kbh_roll <= 1200:
+        yield from bps.mov(hkb_roll, kbh_roll)
+        yield from bps.mov(bdc_z, -1.5)
+        yield from bps.sleep(5)
+        yield from bp.scan(dets, bdc_z, -1.5, -0.6, 901)
+        kbh_roll = kbh_roll + 100
+
+def bdc_z_scan_hslit():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+#   1st order horizontal
+    
+    hslit = -2.2
+    while hslit <= -2.05:
+        yield from bps.mov(dm1_slt, hslit)
+        n = 3
+        for i in range(n):
+            yield from bps.mov(bdc_z, -2.2)
+            yield from bps.sleep(10)
+            yield from bp.scan(dets, bdc_z, -2.3, -2, 301)
+        hslit = hslit + 0.02
 
 
+
+
+def bdc_y_scan_move_kb_y():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+#   1st order horizontal
+    
+    kb_height = 1.0
+    bdc_start = 7.84
+
+    while kb_height <= 2.0:
+        yield from bps.mov(kb_yi, kb_height)
+        yield from bps.mov(kb_yo, kb_height)
+        yield from bps.sleep(5)
+        kbh_roll = 000
+        while kbh_roll <= 1700:
+            yield from bps.mov(hkb_roll, kbh_roll)
+            yield from bps.sleep(10)
+            yield from bps.mov(bdc_y, bdc_start)
+            bdc_end = bdc_start + 0.32
+            yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 641)
+            kbh_roll = kbh_roll + 400
+        kb_height = kb_height + 0.4
+        bdc_start = bdc_start + 0.36
+
+def bdc_y_scan_move_kb_z():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+#   1st order horizontal
+    
+    kb_long = -6
+    bdc_start = 8
+
+    while kb_long <= 6.2:
+        yield from bps.mov(kb_z, kb_long)
+        yield from bps.mov(bdc_y, bdc_start)
+        bdc_end = bdc_start + 0.2
+        yield from bps.sleep(5)
+        yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 401)
+        kb_long = kb_long + 0.2
+        bdc_start = bdc_start - 0.0084
+"""
 
 def nexafs_pey(e_start, e_finish, speed, deadbnd):
 

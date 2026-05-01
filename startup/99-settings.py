@@ -208,6 +208,13 @@ def load_all_excel():
     EDGE_MAP = load_scan_parameters('scan_parameters.xlsx')
     yield from bps.sleep(1)
 
+def load_all_pey_excel():
+    global PEY_SAMPLE_MAP, PEY_DET_SETTINGS, PEY_EDGE_MAP
+    PEY_SAMPLE_MAP = load_samples('pey_sample_list.xlsx')
+    PEY_DET_SETTINGS = load_det_settings('pey_det_settings.xlsx')
+    PEY_EDGE_MAP = load_scan_parameters('pey_scan_parameters.xlsx')
+    yield from bps.sleep(1)
+
 # SAMPLE_MAP = load_samples('/home/xf23id2/Desktop/mock_sample.xlsx', container=CONTAINER)
 
 #VORTEX_SETTINGS = {'Cu_L': {'vortex.peaking_time': 0.4,
@@ -544,6 +551,7 @@ def edge_ascan(sample_name, edge, md=None):
 
 # Using the Xpress3 with the Vortex:
     dets = [sclr, xs3, norm_ch4, ring_curr]
+#    dets = [sclr, ring_curr]
     for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv','channel01.mcaroi03.total_rbv','channel01.mcaroi04.total_rbv']:
         getattr(xs3, channel).kind = 'hinted'
     for channel in ['channel01.mcaroi01.total_rbv','channel01.mcaroi02.total_rbv']:
@@ -649,10 +657,14 @@ def edge_stepscan(sample_name, edge, md=None):
     yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
     yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
     yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
-    yield from bps.sleep(40)
-#    yield from bps.abs_set(m1b1_fp, 100)
+    yield from bps.sleep(15)
+
+##  FOR USING BEAM POSITION WITH FIXED M1B1 SETPOINT  ##
+    yield from bps.abs_set(m1b1_setpoint, e_scan_params['m1b1_sp'], wait=True)
     yield from bps.abs_set(feedback, 1, wait=True)
     yield from bps.sleep(5)
+    yield from bps.abs_set(feedback, 0, wait=True)
+
 #    yield from bps.abs_set(feedback, 0, wait=True)
     yield from bps.abs_set(vortex_x, det_settings['vortex_pos'], wait=True)
     yield from bps.abs_set(sample_sclr_gain, det_settings['samplegain'], wait=True)
@@ -716,18 +728,22 @@ def edge_stepscan(sample_name, edge, md=None):
 
     scan_kwargs = {'start': e_scan_params['stop'],
                    'stop': e_scan_params['start'],
-                   'velocity': e_scan_params['velocity'],
+                   'step': e_scan_params['step'],
                    'deadband': e_scan_params['deadband'],
                    'md': md}
     ret = []
     for j in range(e_scan_params['scan_count']):
         tmp_pos = sample_props['pos'] + (j-((e_scan_params['scan_count']-1)/2))*e_scan_params['intervals']
-        points = ((e_scan_params['stop'] - e_scan_params['start'])/e_scan_params['velocity']) + 1
+        points = int(((e_scan_params['stop'] - e_scan_params['start'])/e_scan_params['step']) + 1)
+        points1 = int(((e_scan_params['stop1'] - e_scan_params['start1'])/e_scan_params['step1']) + 1)
+        points2 = int(((e_scan_params['stop2'] - e_scan_params['start2'])/e_scan_params['step2']) + 1)
+        points3 = int(((e_scan_params['stop3'] - e_scan_params['start3'])/e_scan_params['step3']) + 1)
         yield from bps.abs_set(ioxas_x, tmp_pos, wait=True)
         yield from bps.abs_set(feedback, 0, wait=True)
         yield from bps.abs_set(pgm_energy, e_scan_params['e_align'], wait=True)
         yield from bps.abs_set(epu1table, e_scan_params['epu_table'], wait=True)
         yield from bps.abs_set(epu1offset, e_scan_params['epu1offset'], wait=True)
+        yield from bps.abs_set(epu1.flt.output_deadband, e_scan_params['deadband'], wait=True)
         yield from bps.sleep(5)
 #       yield from bps.abs_set(m1b1_fp, 100)
         yield from bps.abs_set(feedback, 1, wait=True)
@@ -736,11 +752,12 @@ def edge_stepscan(sample_name, edge, md=None):
         yield from bps.sleep(5)
         yield from bps.abs_set(pgm_energy, e_scan_params['start'], wait=True)
         yield from bps.sleep(5)
-        yield from bps.abs_set(feedback, 1, wait=True)
+#        yield from bps.abs_set(feedback, 1, wait=True)
         yield from open_all_valves(all_valves)
-        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
+#        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
+        res = yield from bpp.subs_wrapper(bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], num=points, per_step=None, md=md), {'stop': save_csv})
 #        yield from bps.sleep(10)
-#        res = yield from bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(278, 290, 121),np.linspace(290, 300, 51),np.linspace(300, 320, 41),np.linspace(320,380,61)]))      
+#        res = yield from bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(e_scan_params['start1'], e_scan_params['stop1'], points1),np.linspace(e_scan_params['start2'], e_scan_params['stop2'], points2),np.linspace(e_scan_params['start3'], e_scan_params['stop3'], points3)]))      
 #        res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
         yield from bps.abs_set(valve_diag3_close, 1, wait=True)
         yield from bps.abs_set(valve_mir3_close, 1, wait=True)
@@ -865,8 +882,8 @@ def pey_edge_ascan(sample_name, edge, md=None):
 #        yield from bps.sleep(10)
 #        res = yield from bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(278, 290, 121),np.linspace(290, 300, 51),np.linspace(300, 320, 41),np.linspace(320,380,61)]))      
         res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_pey_csv})
-        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
-        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
+#        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
+#        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
         yield from bps.sleep(5)
         if res is None:
             res = []
@@ -912,15 +929,20 @@ def multi_step_scan(*, edge_list=None, sample_list=None):
             yield from edge_stepscan(**inp)
     yield from bps.abs_set(valve_diag3_close, 1)
     yield from bps.abs_set(valve_mir3_close, 1)
+    yield from bps.abs_set(epu1.flt.output_deadband, 0, wait=True)
 
 
-def multi_pey_edge(*, edge_list=None, sample_list=None):
-    if sample_list is None:
-        sample_list = list(PEY_SAMPLE_MAP)
-    if edge_list is None:
-        edge_list = list(PEY_EDGE_MAP)
+def multi_pey_edge(*, pey_edge_list=None, pey_sample_list=None):
+    global PEY_SAMPLE_MAP, PEY_DET_SETTINGS, PEY_EDGE_MAP
+    PEY_SAMPLE_MAP=load_samples('pey_sample_list.xlsx')
+    PEY_DET_SETTINGS=load_det_settings('pey_det_settings.xlsx')
+    PEY_EDGE_MAP=load_scan_parameters('pey_scan_parameters.xlsx')
+    if pey_sample_list is None:
+        pey_sample_list = list(PEY_SAMPLE_MAP)
+    if pey_edge_list is None:
+        pey_edge_list = list(PEY_EDGE_MAP)
 #    edge_list = sorted(edge_list, key=lambda k: EDGE_MAP[k]['start'])
-    cy = cycler('edge', edge_list) * cycler('sample_name', sample_list)
+    cy = cycler('edge', pey_edge_list) * cycler('sample_name', pey_sample_list)
     for inp in cy:
         if pey_pass_filter(**inp):
             yield from pey_edge_ascan(**inp)
@@ -991,7 +1013,7 @@ def finish_XAS():
 
 def save_csv(edge, stop_doc):
 #    required_columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi4_count', 'vortex_mca_rois_roi3_count']
-    required_columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY']
+    required_columns=['pgm_energy_readback', 'ring_curr', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY']
     h = db[stop_doc['run_start']]
     df = db.get_table(h)
     fn = '{name}_{edge}_{scan_id}.csv'.format(**h.start)

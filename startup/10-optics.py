@@ -184,4 +184,65 @@ m1b1_cp_jog_ng = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWN_CMD.PROC', nam
 m1b1_cp_jog_ps = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWP_CMD.PROC', name='m1b1_cp_jog_ps')
 m1b1_cp_jog_sp = EpicsSignal('XF:23IDA-OP:2{Mir:1A-Ax:Pit}Mtr_TWV_SP', name='m1b1_cp_jog_sp')
 
+# INSPIRE motors
+#DM1
+
+dm1_x = EpicsMotor('XF:23ID2-OP{DM1-Ax:X}Mtr', name='dm1_x')
+dm1_roll = EpicsMotor('XF:23ID2-OP{DM1-Ax:Roll}Mtr', name='dm1_roll')
+dm1_diag = EpicsMotor('XF:23ID2-OP{DM1:FS-Ax:Y}Mtr', name='dm1_diag')
+dm1_slt = EpicsMotor('XF:23ID2-OP{DM1:HSlt-Ax:X}Mtr', name='dm1_slt')
+
+# DM2
+dm2_us_diag = EpicsMotor('XF:23ID2-OP{DM2:FS-Ax:Y}Mtr', name='dm2_us_diag')
+dm2_ds_diag = EpicsMotor('XF:23ID2-OP{DM2:FSPhDiod-Ax:Y}Mtr', name='dm2_ds_diag')
+
+dm2_ygap = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:YGap}Mtr', name='dm2_ygap')
+dm2_yctr = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:YCtr}Mtr', name='dm2_yctr')
+dm2_xgap = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:XGap}Mtr', name='dm2_xgap')
+dm2_xctr = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:XCtr}Mtr', name='dm2_xctr')
+
+# KB in-air motors
+kb_roll = EpicsMotor('XF:23ID2-OP{KB:base-Ax:Theta}Mtr', name='kb_roll')
+kb_yi = EpicsMotor('XF:23ID2-OP{KB:base-Ax:InB}Mtr', name='kb_yi')
+kb_yo = EpicsMotor('XF:23ID2-OP{KB:base-Ax:OutB}Mtr', name='kb_yo')
+kb_x = EpicsMotor('XF:23ID2-OP{KB:base-Ax:X}Mtr', name='kb_x')
+kb_z = EpicsMotor('XF:23ID2-OP{KB:base-Ax:Z}Mtr', name='kb_z')
+kbph_y = EpicsMotor('XF:23ID2-OP{KB:Pnh-Ax:Y}Mtr', name='kbph_y')
+kbph_x = EpicsMotor('XF:23ID2-OP{KB:Pnh-Ax:X}Mtr', name='kbph_x')
+kbdiag_y = EpicsMotor('XF:23ID2-OP{KB:Diag-Ax:Z}Mtr', name='kbdiag_y')
+kbdiag_rot = EpicsMotor('XF:23ID2-OP{KB:Diag-Ax:Rot}Mtr', name='kbdiag_rot')
+
+# KB in-vacuum motors
+hkb_pitch = EpicsMotor('XF:23ID2-OP{KB:MirH-Ax:Pitch}Mtr', name='hkb_pitch')
+hkb_roll = EpicsMotor('XF:23ID2-OP{KB:MirH-Ax:Roll}Mtr', name='hkb_roll')
+vkb_pitch = EpicsMotor('XF:23ID2-OP{KB:MirV-Ax:Pitch}Mtr', name='vkb_pitch')
+
+# BDC motors
+bdc_x = EpicsMotor('XF:23ID2-OP{IRm-Ax:X}Mtr', name='bdc_x')
+bdc_z = EpicsMotor('XF:23ID2-OP{IRm-Ax:Z}Mtr', name='bdc_z')
+bdc_y = EpicsMotor('XF:23ID2-OP{IRm-Ax:Y}Mtr', name='bdc_y')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
