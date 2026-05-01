@@ -1,6 +1,10 @@
-from PyQt5 import uic, QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QMessageBox
-from PyQt5.Qt import Qt
+# from PyQt5 import uic, QtGui, QtCore, QtWidgets
+# from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QMessageBox
+# from PyQt5.Qt import Qt
+from qtpy import uic, QtGui, QtCore, QtWidgets
+from qtpy.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QMessageBox
+from qtpy.QtCore import Qt
+
 #from PyQt5.Qt import Qt
 import sys
 import bluesky_ui_logger
