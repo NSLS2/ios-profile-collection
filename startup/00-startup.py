@@ -15,7 +15,9 @@ nslsii.configure_base(
     get_ipython().user_ns,
     broker_name='ios',
     publish_documents_with_kafka=True,
-    redis_url = "info.ios.nsls2.bnl.gov")
+    redis_url = "xf23id2-ios-redis1.nsls2.bnl.gov",
+    redis_port=6380,
+    redis_ssl=True)
 
 # make sure Best Effort Callback does not plot the baseline readings
 bec.noplot_streams.append('pgm_energy_monitor')
