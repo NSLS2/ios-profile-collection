@@ -1,0 +1,36 @@
+name: Test IPython beamline profiles
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testing_beamline_profiles:
+    name: ${{ matrix.repos.beamline-acronym }}
+    strategy:
+      fail-fast: false
+      matrix:
+        repos:
+          - org: "NSLS2"
+            repo: "ios-profile-collection"
+            branch: ""
+            beamline-acronym: "ios"
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Integration Tests Against Beamline Profiles
+        uses: NSLS2/gha-beamline-integration-test@2026-2
+        with:
+          org: "${{ matrix.repos.org }}"
+          repo: "${{ matrix.repos.repo }}"
+          branch: "${{ matrix.repos.branch }}"
+          beamline-acronym: "${{ matrix.repos.beamline-acronym }}"
