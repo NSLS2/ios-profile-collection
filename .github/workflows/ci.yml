@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Integration Tests Against Beamline Profiles
-        uses: NSLS2/gha-beamline-integration-test@2026-2
+        uses: NSLS2/gha-beamline-integration-test@ios-redis-ssl-config
         with:
           org: "${{ matrix.repos.org }}"
           repo: "${{ matrix.repos.repo }}"
