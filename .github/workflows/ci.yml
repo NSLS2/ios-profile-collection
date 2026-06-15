@@ -35,3 +35,4 @@ jobs:
           repo: "${{ matrix.repos.repo }}"
           branch: "${{ matrix.repos.branch }}"
           beamline-acronym: "${{ matrix.repos.beamline-acronym }}"
+          test-queueserver: 'true'
