@@ -87,6 +87,12 @@ def save_xas_time(first_id, last_id):
                 #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
                 df.to_csv('~/User_Data/Hunt/Carbon_contamination/Time_Scan_%d.csv' % scanid, columns=['time', 'sclr_ch2', 'sclr_ch3'])
 
+def save_xas_exitslit(first_id, last_id):
+        for scanid in range(first_id,last_id+1,1):
+                df = db.get_table(db[scanid])
+                #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
+                df.to_csv('~/User_Data/Comm/ExitSlit_%d.csv' % scanid, columns=['time', 'slt2', 'sclr_ch2'])
+
 def save_xas_position(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
                 df = db.get_table(db[scanid])

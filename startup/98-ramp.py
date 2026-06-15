@@ -85,12 +85,14 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     yield from bps.abs_set(pgm.fly.velocity, velocity, wait=True)
 
 
-    if specs in dets:
-        specs.stage()
+    # if specs in dets:
+    #    yield from bps.stage(specs)
+    #    # specs.stage()
 
     for det in dets:
-        if det.name == "xs3":
-            det.stage()
+        # if det.name == "xs3":
+         yield from bps.stage(det)
+            # det.stage()
 
     # TODO do this with stage
     old_db = epu1.flt.output_deadband.get()
