@@ -14,7 +14,7 @@ def now():
 
 
 xs3_pv_prefix = "XF:23ID2-ES{Xsp:1}:"
-xs3_root_path = "/nsls2/data3/ios/legacy/xspress3_data"
+xs3_root_path = "/nsls2/data/ios/legacy/xspress3_data"
 xs3_data_dir = os.path.join(xs3_root_path, "%Y/%m/%d")
 
 xspress3_class = build_xspress3_class(
