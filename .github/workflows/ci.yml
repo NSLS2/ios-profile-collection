@@ -1,0 +1,58 @@
+name: Test IPython beamline profiles
+
+on:
+  push:
+    branches:
+      - main
+      - add-gha-ci
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testing_beamline_profiles:
+    name: ${{ matrix.repos.beamline-acronym }}
+    strategy:
+      fail-fast: false
+      matrix:
+        repos:
+          - org: "NSLS2"
+            repo: "ios-profile-collection"
+            branch: ""
+            beamline-acronym: "ios"
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Write run context to job summary
+        shell: bash
+        run: |
+          short_sha="${GITHUB_SHA:0:8}"
+          {
+            echo "# 🔬 IOS Beamline Profile CI"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Run** | [#${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) |"
+            echo "| **Actor** | @${GITHUB_ACTOR} |"
+            echo "| **Event** | \`${GITHUB_EVENT_NAME}\` |"
+            echo "| **Ref** | \`${GITHUB_REF_NAME}\` |"
+            echo "| **Commit** | [\`${short_sha}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}) |"
+            echo ""
+            echo "---"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Run Integration Tests Against Beamline Profiles
+        id: run-tests
+        uses: NSLS2/gha-beamline-integration-test@ios-redis-ssl-config
+        with:
+          org: "${{ matrix.repos.org }}"
+          repo: "${{ matrix.repos.repo }}"
+          branch: "${{ matrix.repos.branch }}"
+          beamline-acronym: "${{ matrix.repos.beamline-acronym }}"
+          test-queueserver: 'true'
