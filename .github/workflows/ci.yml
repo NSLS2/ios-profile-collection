@@ -28,7 +28,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Write run context to job summary
+        shell: bash
+        run: |
+          short_sha="${GITHUB_SHA:0:8}"
+          {
+            echo "# 🔬 IOS Beamline Profile CI"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Run** | [#${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) |"
+            echo "| **Actor** | @${GITHUB_ACTOR} |"
+            echo "| **Event** | \`${GITHUB_EVENT_NAME}\` |"
+            echo "| **Ref** | \`${GITHUB_REF_NAME}\` |"
+            echo "| **Commit** | [\`${short_sha}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}) |"
+            echo ""
+            echo "---"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Run Integration Tests Against Beamline Profiles
+        id: run-tests
         uses: NSLS2/gha-beamline-integration-test@ios-redis-ssl-config
         with:
           org: "${{ matrix.repos.org }}"
