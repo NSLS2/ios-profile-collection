@@ -1,3 +1,5 @@
+raise RuntimeError("Forced QS failure — testing independent QS error summary annotations")
+
 # this is deprecated
 # use best effort callbacks instead or custom callback
 #gs.DETS = [sclr, ring_curr]
