@@ -1,8 +1,12 @@
 import os
+from bluesky_tiled_plugins import BufferingWrapper, TiledInserter
 os.environ['QT_API'] = 'pyqt5'
 from ophyd.signal import EpicsSignalBase
+from tiled.client import from_profile
 # EpicsSignalBase.set_default_timeout(timeout=10, connection_timeout=10)  # old style
 EpicsSignalBase.set_defaults(timeout=10, connection_timeout=10)  # new style
+
+TILED_BACKUP_ROOT = "/nsls2/data/ios/shared/config/bluesky/tiled_backup"
 
 import logging
 
@@ -10,14 +14,31 @@ import logging
 
 # db = Broker.named('ios')
 
+tiled_writing_client = from_profile(
+    "nsls2", api_key=os.environ["TILED_BLUESKY_WRITING_API_KEY_IOS"]
+)["ios/raw"]
+tiled_writing_client.context.http_client.headers['tiled-qos'] = 'acquisition'
+tiled_inserter = TiledInserter(
+    tiled_writing_client,
+    "ios",
+    backup_directory=f"{TILED_BACKUP_ROOT}/raw")
+tiled_inserter = BufferingWrapper(tiled_inserter)  # in-process queue: RE never blocks
+
+from databroker import Broker
+tiled_reading_client = cat = from_profile("nsls2", username=None)["ios/raw"]
+tiled_reading_client.context.http_client.headers['tiled-qos'] = 'acquisition'
+db = Broker(tiled_reading_client)  # Keep for backcompatibility with older code that uses databroker
+
 import nslsii
 nslsii.configure_base(
     get_ipython().user_ns,
-    broker_name='ios',
+    db,
     publish_documents_with_kafka=True,
     redis_url = "xf23id2-ios-redis1.nsls2.bnl.gov",
     redis_port=6380,
     redis_ssl=True)
+
+RE.subscribe(tiled_inserter)
 
 # make sure Best Effort Callback does not plot the baseline readings
 bec.noplot_streams.append('pgm_energy_monitor')
