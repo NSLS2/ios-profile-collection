@@ -85,13 +85,13 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
     yield from bps.abs_set(pgm.fly.velocity, velocity, wait=True)
 
 
-    # if specs in dets:
-    #    yield from bps.stage(specs)
+    if specs in dets:
+        yield from bps.stage(specs)
     #    # specs.stage()
 
     for det in dets:
-        # if det.name == "xs3":
-         yield from bps.stage(det)
+         if det.name == "xs3":
+            yield from bps.stage(det)
             # det.stage()
 
     # TODO do this with stage
@@ -116,11 +116,13 @@ def _run_E_ramp(dets, start, stop, velocity, deadband, *,
         yield from bps.abs_set(epu1.flt.output_deadband, old_db, wait=True)
 
         if specs in dets:
-            specs.unstage()
+            yield from bps.unstage(specs)
+#            specs.unstage()
 
         for det in dets:
             if det.name == "xs3":
-                det.unstage()
+                 yield from bps.unstage(det)
+#                det.unstage()
 
     # change to track the readout energy
     yield from change_epu_flt_link(pgm_energy.readback.pvname)

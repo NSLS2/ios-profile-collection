@@ -29,7 +29,7 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
             df.to_csv('~/User_Data/Northrup/Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'ring_curr', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'TFY', 'IPFY', 'PFY'], index=True)
         elif exptype == 'PD':
             df = db[scanid].table()
-            df.to_csv('~/User_Data/Hunt/Carbon_contamination/Jul2025/Photodiode_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
+            df.to_csv('~/User_Data/Hunt/Carbon_contamination/ScansForPaper/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'], index=False)
         elif exptype == 'es':
             df = db[scanid].table()
             df.to_csv('~/User_Data/Comm/ExitSlit_C_K1_%d.csv' % scanid, columns=['slt2', 'sclr_ch2'], index=False)
@@ -41,14 +41,6 @@ def save_xas_csv(first_id, last_id, exptype = 'normal'):
             df.to_csv('~/User_Data/Hunt/Carbon_contamination/May2024/Stability_%d.csv' % scanid, columns=['time', 'ring_curr', 'epu2_gap_readback', 'epu2_phase_readback', 'epu1_gap_readback', 'm1b_fp_rb', 'yag_centroid', 'sclr_ch2'], index=False)
         else:
             print('Unknown file type')
-
-
-def save_xas_csv_short(first_id, last_id):
-        for scanid in range(first_id,last_id+1,1):
-                df = db.get_table(db[scanid])
-                #fn = 'csv_data/Scan_{scan_id}.csv'.format(db[scanid].start)
-#                df.to_csv('~/User_Data/Hunt/Carbon_contamination/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3'])
-                df.to_csv('~/User_Data/May/PD_Scan_%d.csv' % scanid, columns=['pgm_energy_readback', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4'])
 
 def save_bdc(first_id, last_id):
         for scanid in range(first_id,last_id+1,1):
@@ -64,6 +56,11 @@ def save_all(first_id, last_id):
 #                df.to_csv('~/User_Data/Salmeron/Feb2020/Scan_%d.csv' % scanid, columns=['time', 'pgm_energy_readback', 'm1b1_fp', 'm3b_pit_setpoint', 'sclr_ch2', 'sclr_ch3', 'sclr_ch4', 'norm_ch4', 'vortex_mca_rois_roi1_count', 'vortex_mca_rois_roi2_count', 'vortex_mca_rois_roi3_count', 'vortex_mca_rois_roi4_count'])
                 df.to_csv('~/User_Data/Comm/%d.csv' % scanid, columns=['time','sclr_ch2', 'epu1_gap_readback','epu2_gap_readback','epu2_phase_readback','yag_centroid','m1b_fp_rb','ring_curr'])
 #                df.to_csv('~/User_Data/Salmeron/Scan_%d.csv' % scanid)
+
+def save_gap_scans(first_id, last_id):
+        for scanid in range(first_id,last_id+1,1):
+                df = db.get_table(db[scanid])
+                df.to_csv('~/User_Data/Hunt/Carbon_contamination/ScansForPaper/Gap_Scans_102220_%d.csv' % scanid, columns=['epu1_gap_readback', 'ring_curr', 'sclr_ch2',])
 
 
 #def switch_to_xps():

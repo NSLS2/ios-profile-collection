@@ -5,20 +5,6 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 #---------------------INSPIRE SCANS----------------------------------------------------------------------------------------------------
-def bdc_z_scan_move_kbhroll():
-    dets=[sclr, ring_curr]
-
-    for channel in ['channels.chan2']:
-        getattr(sclr, channel).kind = 'hinted'
-    for channel in ['channels.chan3','channels.chan4']:
-        getattr(sclr, channel).kind = 'normal'
-    kbh_roll = -800
-    while kbh_roll <= 1200:
-        yield from bps.mov(hkb_roll, kbh_roll)
-        yield from bps.mov(bdc_z, -1.5)
-        yield from bps.sleep(5)
-        yield from bp.scan(dets, bdc_z, -1.5, -0.6, 901)
-        kbh_roll = kbh_roll + 100
 
 def bdc_z_scan_move_bdc_x():
     dets=[sclr, ring_curr]
@@ -77,7 +63,40 @@ def test_kbx_corr():
         yield from bps.sleep(30)
         kbroll = kbroll + 100
 
+def bdc_y_scan_vslit():
+    dets=[sclr, ring_curr]
 
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    vslit = -2
+
+    while vslit <= 4:
+        yield from bps.mov(slt2, vslit)
+        yield from bps.mov(bdc_y, -81.08)
+        yield from bps.sleep(10)
+        yield from bp.scan(dets, bdc_y, -81.08, -80.96, 241)
+        vslit = vslit + 2
+
+
+def bdc_y_scan_hslit():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    hslit = 0.05
+
+    while hslit <= 0.25:
+        yield from bps.mov(slt2, vslit)
+        yield from bps.mov(bdc_y, -7.1)
+        yield from bps.sleep(10)
+        yield from bp.scan(dets, bdc_y, -7.1, -6.95, 301)
+        hslit = hslit + 0.02
 
 def bdc_z_scan_hslit():
     dets=[sclr, ring_curr]
@@ -87,15 +106,90 @@ def bdc_z_scan_hslit():
     for channel in ['channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'normal'
 
-    hslit = -1.6
-    while hslit <= -2:
+    hslit = 0.25
+
+    while hslit <= 0.55:
         yield from bps.mov(dm1_slt, hslit)
-#        n = 1
-#        for i in range(n):
-        yield from bps.mov(bdc_z, -7.1)
+        yield from bps.mov(bdc_z, -7.45)
         yield from bps.sleep(10)
-        yield from bp.scan(dets, bdc_z, -7.1, -6.95, 301)
+        yield from bp.scan(dets, bdc_z, -7.46, -7.34, 121)
         hslit = hslit + 0.05
+
+def bdc_z_scan_dm2hslit():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    dm2hslit = 6
+
+    while dm2hslit >= 1:
+        yield from bps.mov(dm2_xgap, dm2hslit)
+        yield from bps.mov(bdc_z, -7.63)
+        yield from bps.sleep(10)
+        yield from bp.scan(dets, bdc_z, -7.63, -7.53, 201)
+        dm2hslit = dm2hslit - 1
+
+def bdc_z_scan_dm1_slit_dm2hslit():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    hslit = 0.25
+    while hslit <= 0.5:
+        yield from bps.mov(dm1_slt, hslit)
+        dm2hslit = 6
+        while dm2hslit >= 1:
+             yield from bps.mov(dm2_xgap, dm2hslit)
+             yield from bps.mov(bdc_z, -7.63)
+             yield from bps.sleep(10)
+             yield from bp.scan(dets, bdc_z, -7.63, -7.53, 201)
+             dm2hslit = dm2hslit - 1
+        hslit = hslit + 0.05
+
+
+def bdc_y_scan_dm1roll():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    dm1roll = -1.0
+    dm1x = -2.38
+
+    while dm1roll <= 1.0:
+        yield from bps.mov(dm1_roll, dm1roll)
+        yield from bps.mov(dm1_x, dm1x)
+        yield from bps.mov(bdc_y, -81.08)
+        yield from bps.sleep(10)
+        yield from bp.scan(dets, bdc_y, -81.08, -80.96, 241)
+        dm1roll = dm1roll + 0.1
+        dm1x = dm1x + 0.002
+
+def dm1_x_scan_dm1roll():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    dm1roll = -1.0
+
+    while dm1roll <= 1.0:
+        yield from bps.mov(dm1_roll, dm1roll)
+        yield from bps.mov(dm1_x, -2.5)
+        yield from bps.sleep(10)
+        yield from bp.scan(dets, dm1_x, -2.5, -2.2, 151)
+        dm1roll = dm1roll + 0.1
+
 
 def bdc_y_scan_move_kb_y():
     dets=[sclr, ring_curr]
@@ -106,9 +200,32 @@ def bdc_y_scan_move_kb_y():
         getattr(sclr, channel).kind = 'normal'
 
     kb_height = 1.0
+    bdc_start = -80.152
+
+    while kb_height <= 1.5:
+        yield from bps.mov(kb_yi, kb_height)
+        yield from bps.mov(kb_yo, kb_height)
+        yield from bps.sleep(5)
+        bdc_end = bdc_start + 0.12
+        yield from bps.sleep(5)
+        yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 241)
+        kb_height = kb_height + 0.1
+        bdc_start = bdc_start + 0.088
+
+
+
+def bdc_y_scan_move_kb_y_and_kbhroll():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    kb_height = 1.2
     bdc_start = 7.84
 
-    while kb_height <= 2.0:
+    while kb_height <= 1.4:
         yield from bps.mov(kb_yi, kb_height)
         yield from bps.mov(kb_yo, kb_height)
         yield from bps.sleep(5)
@@ -124,6 +241,68 @@ def bdc_y_scan_move_kb_y():
         bdc_start = bdc_start + 0.36
 
 
+def bdc_y_scan_move_kb_y_and_kbvpitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    kb_height = 4.2
+    bdc_start = -75.245
+
+    while kb_height <= 4.6:
+        yield from bps.mov(kb_yi, kb_height)
+        yield from bps.mov(kb_yo, kb_height)
+        yield from bps.sleep(5)
+        kbv_pitch = 5.5
+        while kbv_pitch <= 5.9:
+            yield from bps.mov(vkb_pitch, kbv_pitch)
+            yield from bps.sleep(10)
+            yield from bps.mov(bdc_y, bdc_start)
+            bdc_end = bdc_start + 0.15
+            yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 301)
+            kbv_pitch = kbv_pitch + 0.01
+            bdc_start = bdc_start - 0.0435
+        kb_height = kb_height + 0.2
+        bdc_start = bdc_start + 1.9635
+
+def bdc_y_scan_move_kb_z_and_kbvpitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    kb_long = -3
+    bdc_start = -80.44
+
+    while kb_long <= 2:
+        yield from bps.mov(kb_z, kb_long)
+        yield from bps.sleep(5)
+        kbv_pitch = 5.4
+        while kbv_pitch <= 5.7:
+            yield from bps.mov(vkb_pitch, kbv_pitch)
+            yield from bps.abs_set(feedback, 0, wait=True)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(m1b1_fp, 182)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(feedback, 1, wait=True)
+            yield from bps.sleep(4)
+            yield from bps.mov(bdc_y, bdc_start)
+            bdc_end = bdc_start + 0.1
+            yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 201)
+            kbv_pitch = kbv_pitch + 0.01
+            bdc_start = bdc_start - 0.044
+        kb_long = kb_long + 1
+        bdc_start = bdc_start + 1.3205
+
+    yield from bps.abs_set(dm1_gv2_close, 1)
+    yield from bps.abs_set(bt_gv1_close, 1)
+
+
 def bdc_y_scan_move_kb_z():
     dets=[sclr, ring_curr]
 
@@ -133,16 +312,16 @@ def bdc_y_scan_move_kb_z():
         getattr(sclr, channel).kind = 'normal'
 
     kb_long = -6
-    bdc_start = 8
+    bdc_start = -80.86
 
-    while kb_long <= 6.2:
+    while kb_long <= 2.0:
         yield from bps.mov(kb_z, kb_long)
         yield from bps.mov(bdc_y, bdc_start)
-        bdc_end = bdc_start + 0.2
+        bdc_end = bdc_start + 0.12
         yield from bps.sleep(5)
-        yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 401)
+        yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 241)
         kb_long = kb_long + 0.2
-        bdc_start = bdc_start - 0.0084
+        bdc_start = bdc_start - 0.0085
 
 def bdc_z_scan_move_bdc_x():
     dets=[sclr, ring_curr]
@@ -172,17 +351,218 @@ def bdc_z_scan_move_kbh_pitch():
     for channel in ['channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'normal'
 
-    kbh_pitch = -100
-    bdc_start = -5.46
+    hslit = 0.5
+#    dm2_hslit = 6
+    kbh_pitch = 400
+    bdc_start = -6.714
 
-    while kbh_pitch <= 50:
+    while kbh_pitch <= 600:
+#        yield from bps.abs_set(pd_sclr_gain, '1', wait=True)
+#        yield from bps.abs_set(pd_sclr_decade, '1 uA/V', wait=True)
+#        yield from bps.mov(dm1_slt, hslit)
+#        yield from bps.mov(dm2_xgap, dm2_hslit)
+        yield from bps.abs_set(feedback, 0, wait=True)
+        yield from bps.sleep(2)
+        yield from bps.abs_set(m1b1_fp, 180)
+        yield from bps.sleep(2)
+        yield from bps.abs_set(feedback, 1, wait=True)
+        yield from bps.sleep(4)
         yield from bps.mov(hkb_pitch, kbh_pitch)
         yield from bps.mov(bdc_z, bdc_start)
-        bdc_end = bdc_start + 0.1
+        bdc_end = bdc_start + 0.2
         yield from bps.sleep(5)
         yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
         kbh_pitch = kbh_pitch + 10
-        bdc_start = bdc_start - 0.056
+        bdc_start = bdc_start - 0.055
+
+    yield from bps.abs_set(dm1_gv2_close, 1)
+    yield from bps.abs_set(bt_gv1_close, 1)
+
+
+def bdc_y_scan_move_bdc_x_and_kbhroll():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    bdc_long = -25
+    bdc_start = -81.5025
+    a = 4.7
+
+    while bdc_long <= -15:
+        yield from bps.mov(bdc_x, bdc_long)
+        yield from bps.sleep(5)
+        kbh_roll = a
+        while kbh_roll <= a + 2.05:
+            yield from bps.abs_set(feedback, 0, wait=True)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(m1b1_fp, 182)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(feedback, 1, wait=True)
+            yield from bps.sleep(4)
+            yield from bps.mov(hkb_roll, kbh_roll)
+            yield from bps.mov(bdc_y, bdc_start)
+            bdc_end = bdc_start + 0.1
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 201)
+            kbh_roll = kbh_roll + 0.1
+            bdc_start = bdc_start - 0.0095
+        bdc_long = bdc_long + 1
+        bdc_start = bdc_start + 0.28415
+        a = a - 0.27
+    yield from bps.abs_set(dm1_gv2_close, 1)
+    yield from bps.abs_set(bt_gv1_close, 1)
+
+
+def bdc_z_scan_move_bdc_x_and_kbhpitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    bdc_long = -21
+    bdc_start = -6.114
+
+    while bdc_long <= -15:
+        yield from bps.mov(bdc_x, bdc_long)
+        yield from bps.sleep(5)
+        kbh_pitch = 300
+        while kbh_pitch <= 800:
+            yield from bps.mov(hkb_pitch, kbh_pitch)
+            yield from bps.mov(bdc_z, bdc_start)
+            bdc_end = bdc_start + 0.2
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
+            kbh_pitch = kbh_pitch + 20
+            bdc_start = bdc_start - 0.111
+        bdc_long = bdc_long + 0.5
+        bdc_start = bdc_start + 2.88
+
+def bdc_z_scan_move_kbhroll_and_kbhpitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    kbh_roll = 4
+    bdc_start = -4.98
+
+    while kbh_roll <= 5:
+        yield from bps.mov(hkb_roll, kbh_roll)
+        yield from bps.sleep(5)
+        kbh_pitch = 100
+        while kbh_pitch <= 900:
+            yield from bps.abs_set(feedback, 0, wait=True)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(m1b1_fp, 185)
+            yield from bps.sleep(2)
+            yield from bps.abs_set(feedback, 1, wait=True)
+            yield from bps.sleep(4)
+            yield from bps.mov(hkb_pitch, kbh_pitch)
+            yield from bps.mov(bdc_z, bdc_start)
+            bdc_end = bdc_start + 0.2
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
+            kbh_pitch = kbh_pitch + 50
+            bdc_start = bdc_start - 0.278
+        kbh_roll = kbh_roll + 0.1
+        bdc_start = bdc_start + 4.716
+
+    yield from bps.abs_set(dm1_gv2_close, 1)
+    yield from bps.abs_set(bt_gv1_close, 1)
+
+
+def bdc_z_scan_move_dm1_slit_and_kbhpitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    yield from bps.abs_set(pd_sclr_gain, '2', wait=True)
+    yield from bps.abs_set(pd_sclr_decade, '100 nA/V', wait=True)
+
+    hslit = 0.1
+    bdc_start = -4.44
+    dm2_hslit = 6
+
+    while hslit <= 0.16:
+        yield from bps.mov(dm2_xgap, dm2_hslit)
+        yield from bps.mov(dm1_slt, hslit)
+        yield from bps.abs_set(pd_sclr_gain, '2', wait=True)
+        yield from bps.abs_set(pd_sclr_decade, '100 nA/V', wait=True)
+        yield from bps.sleep(5)
+        kbh_pitch = -300
+        while kbh_pitch <= 500:
+            yield from bps.mov(hkb_pitch, kbh_pitch)
+            yield from bps.mov(bdc_z, bdc_start)
+            bdc_end = bdc_start + 0.2
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
+            kbh_pitch = kbh_pitch + 20
+            bdc_start = bdc_start - 0.112
+        hslit = hslit + 0.05
+        bdc_start = -4.44
+
+
+    hslit = 0.0
+    bdc_start = -5
+    dm2_hslit = 1
+
+    yield from bps.abs_set(pd_sclr_gain, '2', wait=True)
+    yield from bps.abs_set(pd_sclr_decade, '10 nA/V', wait=True)
+
+
+    while hslit <= 0.06:
+        yield from bps.mov(dm2_xgap, dm2_hslit)
+        yield from bps.mov(dm1_slt, hslit)
+        yield from bps.abs_set(pd_sclr_gain, '2', wait=True)
+        yield from bps.abs_set(pd_sclr_decade, '10 nA/V', wait=True)
+        yield from bps.sleep(5)
+        kbh_pitch = -200
+        while kbh_pitch <= 600:
+            yield from bps.mov(hkb_pitch, kbh_pitch)
+            yield from bps.mov(bdc_z, bdc_start)
+            bdc_end = bdc_start + 0.2
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
+            kbh_pitch = kbh_pitch + 20
+            bdc_start = bdc_start - 0.112
+        hslit = hslit + 0.055
+        bdc_start = -5
+
+    yield from bps.abs_set(pd_sclr_gain, '1', wait=True)
+    yield from bps.abs_set(pd_sclr_decade, '100 nA/V', wait=True)
+
+    hslit = 0.1
+    bdc_start = -5
+    dm2_hslit = 1
+
+    while hslit <= 0.16:
+        yield from bps.mov(dm2_xgap, dm2_hslit)
+        yield from bps.mov(dm1_slt, hslit)
+        yield from bps.abs_set(pd_sclr_gain, '1', wait=True)
+        yield from bps.abs_set(pd_sclr_decade, '100 nA/V', wait=True)
+        yield from bps.sleep(5)
+        kbh_pitch = -200
+        while kbh_pitch <= 600:
+            yield from bps.mov(hkb_pitch, kbh_pitch)
+            yield from bps.mov(bdc_z, bdc_start)
+            bdc_end = bdc_start + 0.2
+            yield from bps.sleep(5)
+            yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
+            kbh_pitch = kbh_pitch + 20
+            bdc_start = bdc_start - 0.112
+        hslit = hslit + 0.05
+        bdc_start = -5
+
 
 def bdc_z_scan_move_kbh_roll():
     dets=[sclr, ring_curr]
@@ -192,16 +572,16 @@ def bdc_z_scan_move_kbh_roll():
     for channel in ['channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'normal'
 
-    kbh_roll = 10300
-    bdc_start = -5.9
+    kbh_roll = 4
+    bdc_start = -7.285
 
-    while kbh_roll <= 11000:
+    while kbh_roll <= 5:
         yield from bps.mov(hkb_roll, kbh_roll)
         yield from bps.mov(bdc_z, bdc_start)
-        bdc_end = bdc_start + 0.1
+        bdc_end = bdc_start + 0.15
         yield from bps.sleep(5)
-        yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 201)
-        kbh_roll = kbh_roll + 200
+        yield from bp.scan(dets, bdc_z, bdc_start, bdc_end, 301)
+        kbh_roll = kbh_roll + 0.1
         bdc_start = bdc_start - 0.022
 
 def bdc_y_scan_move_kbh_roll():
@@ -212,17 +592,39 @@ def bdc_y_scan_move_kbh_roll():
     for channel in ['channels.chan3','channels.chan4']:
         getattr(sclr, channel).kind = 'normal'
 
-    kbh_roll = 8100
-    bdc_start = -80.1
+    kbh_roll = 2
+    bdc_start = -81.007
 
-    while kbh_roll <= 11000:
+    while kbh_roll <= 5:
         yield from bps.mov(hkb_roll, kbh_roll)
         yield from bps.mov(bdc_y, bdc_start)
         bdc_end = bdc_start + 0.15
         yield from bps.sleep(5)
         yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 301)
-        kbh_roll = kbh_roll + 200
-        bdc_start = bdc_start - 0.0167
+        kbh_roll = kbh_roll + 0.02
+        bdc_start = bdc_start - 0.002
+
+def bdc_y_scan_move_kbv_pitch():
+    dets=[sclr, ring_curr]
+
+    for channel in ['channels.chan2']:
+        getattr(sclr, channel).kind = 'hinted'
+    for channel in ['channels.chan3','channels.chan4']:
+        getattr(sclr, channel).kind = 'normal'
+
+    kbv_pitch = 5.5
+    bdc_start = -80.977
+
+    while kbv_pitch <= 5.6:
+        yield from bps.mov(vkb_pitch, kbv_pitch)
+        yield from bps.mov(bdc_y, bdc_start)
+        bdc_end = bdc_start + 0.1
+        yield from bps.sleep(5)
+        yield from bp.scan(dets, bdc_y, bdc_start, bdc_end, 201)
+        kbv_pitch = kbv_pitch + 0.01
+        bdc_start = bdc_start - 0.044
+
+
 
 def bdc_y_scan_move_bdc_x():
     dets=[sclr, ring_curr]
@@ -299,10 +701,10 @@ def plot_1stderiv(scanid1,scanid2,label,axis):
                   init_center = func['bdc_y'][np.argmax(func['deriv'])]
                   init_guess = [init_max, init_center, init_sigma, init_min]
                   popt,pcov = curve_fit(gaussian, func['bdc_y'], func['deriv'], p0 = init_guess)
-                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
-                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+#                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+#                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
 
-                  # Plet everything together
+                  # Plot everything together
                   func['gaussian'] = gaussian(func['bdc_y'], *popt)
                   func.plot(x = 'bdc_y', y = 'deriv', label = str(i), ax=label)
                   func.plot(x = 'bdc_y', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
@@ -311,10 +713,10 @@ def plot_1stderiv(scanid1,scanid2,label,axis):
                   init_center = func['bdc_z'][np.argmax(func['deriv'])]
                   init_guess = [init_max, init_center, init_sigma, init_min]
                   popt,pcov = curve_fit(gaussian, func['bdc_z'], func['deriv'], p0 = init_guess)
-                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
-                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+#                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+#                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
 
-                  # Plet everything together
+                  # Plot everything together
                   func['gaussian'] = gaussian(func['bdc_z'], *popt)
                   func.plot(x = 'bdc_z', y = 'deriv', label = str(i), ax=label)
                   func.plot(x = 'bdc_z', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
@@ -323,13 +725,18 @@ def plot_1stderiv(scanid1,scanid2,label,axis):
                   init_center = func['dm1_x'][np.argmax(func['deriv'])]
                   init_guess = [init_max, init_center, init_sigma, init_min]
                   popt,pcov = curve_fit(gaussian, func['dm1_x'], func['deriv'], p0 = init_guess)
-                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
-                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+#                  print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+#                  print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
 
-                  # Plet everything together
+                  # Plot everything together
                   func['gaussian'] = gaussian(func['dm1_x'], *popt)
                   func.plot(x = 'dm1_x', y = 'deriv', label = str(i), ax=label)
                   func.plot(x = 'dm1_x', y = 'gaussian', label = str(i)+" Gaussian fit", ax=label)
+
+             print("The width of the fit at 10% amplitude for scan ID", i, "is:", round(2*2.146*popt[2],4), "mm.")
+             print("The FWHM of the fit for scan ID", i, "is:", round(2.35482*popt[2],4), "mm.")
+             print("The center of the fit for scan ID", i, "is:", round(popt[1],3), "mm.")
+
 
 def plot_gaussian_fit(scanid1,scanid2,label,axis):
         plt.figure(label)

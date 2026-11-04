@@ -599,14 +599,14 @@ def edge_ascan(sample_name, edge, md=None):
 #        yield from bps.sleep(5)
 
         yield from bps.abs_set(pgm_energy, e_scan_params['stop'], wait=True)
-#        yield from bps.sleep(20)
+        yield from bps.sleep(3)
         yield from open_all_valves(all_valves)
 #        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
 #        yield from bps.sleep(10)
 #        res = yield from bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(278, 290, 121),np.linspace(290, 300, 51),np.linspace(300, 320, 41),np.linspace(320,380,61)]))      
         res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
-        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
-        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
+#        yield from bps.abs_set(valve_diag3_close, 1, wait=True)
+#        yield from bps.abs_set(valve_mir3_close, 1, wait=True)
         yield from bps.sleep(5)
         if res is None:
             res = []
@@ -755,9 +755,9 @@ def edge_stepscan(sample_name, edge, md=None):
 #        yield from bps.abs_set(feedback, 1, wait=True)
         yield from open_all_valves(all_valves)
 #        res = yield from bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], points)
-        res = yield from bpp.subs_wrapper(bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], num=points, per_step=None, md=md), {'stop': save_csv})
+#        res = yield from bpp.subs_wrapper(bp.scan(dets, pgm_energy, e_scan_params['start'], e_scan_params['stop'], num=points, per_step=None, md=md), {'stop': save_csv})
 #        yield from bps.sleep(10)
-#        res = yield from bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(e_scan_params['start1'], e_scan_params['stop1'], points1),np.linspace(e_scan_params['start2'], e_scan_params['stop2'], points2),np.linspace(e_scan_params['start3'], e_scan_params['stop3'], points3)]))      
+        res = yield from bpp.subs_wrapper(bp.list_scan(dets, pgm_energy, np.concatenate([np.linspace(e_scan_params['start'], e_scan_params['stop'], points),np.linspace(e_scan_params['start1'], e_scan_params['stop1'], points1),np.linspace(e_scan_params['start2'], e_scan_params['stop2'], points2),np.linspace(e_scan_params['start3'], e_scan_params['stop3'], points3)]), md = md), {'stop': save_csv}) 
 #        res = yield from bpp.subs_wrapper(E_ramp(dets, **scan_kwargs), {'stop': save_csv})
         yield from bps.abs_set(valve_diag3_close, 1, wait=True)
         yield from bps.abs_set(valve_mir3_close, 1, wait=True)
@@ -918,6 +918,10 @@ def multi_sample_edge(*, edge_list=None, sample_list=None):
     yield from bps.abs_set(valve_mir3_close, 1)
 
 def multi_step_scan(*, edge_list=None, sample_list=None):
+    global SAMPLE_MAP, DET_SETTINGS, EDGE_MAP
+    SAMPLE_MAP=load_samples('sample_list.xlsx')
+    DET_SETTINGS=load_det_settings('det_settings.xlsx')
+    EDGE_MAP=load_scan_parameters('scan_parameters.xlsx')
     if sample_list is None:
         sample_list = list(SAMPLE_MAP)
     if edge_list is None:
