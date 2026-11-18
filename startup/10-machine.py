@@ -64,6 +64,9 @@ class EPU2(Device):
 
 epu1 = EPU1('XF:23ID-ID{EPU:1', name='epu1')
 
+# Record the state of the EPU1 with every run (the model of the experiment relies on it).
+sd.baseline.extend([epu1.gap, epu1.phase, epu1.table, epu1.flt.input_offset])
+
 epu2 = EPU2('XF:23ID-ID{EPU:2', name='epu2')
 
 # Front End Slits (Primary Slits)

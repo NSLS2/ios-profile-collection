@@ -202,6 +202,7 @@ dm2_xgap = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:XGap}Mtr', name='dm2_xgap')
 dm2_xctr = EpicsMotor('XF:23ID2-OP{DM2:Slt-Ax:XCtr}Mtr', name='dm2_xctr')
 
 # KB in-air motors
+kb_vert = EpicsMotor('XF:23ID2-OP{KB:base-Ax:Y_prime}Mtr', name='kb_vert')
 kb_roll = EpicsMotor('XF:23ID2-OP{KB:base-Ax:Theta}Mtr', name='kb_roll')
 kb_yi = EpicsMotor('XF:23ID2-OP{KB:base-Ax:InB}Mtr', name='kb_yi')
 kb_yo = EpicsMotor('XF:23ID2-OP{KB:base-Ax:OutB}Mtr', name='kb_yo')
