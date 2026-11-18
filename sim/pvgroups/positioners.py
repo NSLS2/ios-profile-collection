@@ -67,7 +67,7 @@ class EPU1IOC(PVGroup):
     flt_inp_off    = pvproperty(name="XF:23ID-ID{{EPU:1-FLT}}Val:InpOff1-SP",   value=0.0)
     flt_inp_enbl   = pvproperty(name="XF:23ID-ID{{EPU:1-FLT}}Enbl:Inp1-Sel",    value="Enabled",
                                 dtype=str, max_length=16)
-    flt_inp_pv     = pvproperty(name="XF:23ID-ID{{EPU:1-FLT}}Val:Inp1-SP.DOL$", value="",
+    flt_inp_pv     = pvproperty(name="XF:23ID-ID{{EPU:1-FLT}}Val:Inp1-SP.DOL$", value="XF:23ID2-OP{Mono}Enrgy-SP CP",
                                 dtype=str, max_length=60)
     flt_output     = pvproperty(name="XF:23ID-ID{{EPU:1-FLT}}Val:Out1-I",       value=0.0,
                                 read_only=True)
@@ -86,7 +86,7 @@ class EPU1IOC(PVGroup):
     rlt_inp_off    = pvproperty(name="XF:23ID-ID{{EPU:1-RLT}}Val:InpOff1-SP",   value=0.0)
     rlt_inp_enbl   = pvproperty(name="XF:23ID-ID{{EPU:1-RLT}}Enbl:Inp1-Sel",    value="Enabled",
                                 dtype=str, max_length=16)
-    rlt_inp_pv     = pvproperty(name="XF:23ID-ID{{EPU:1-RLT}}Val:Inp1-SP.DOL$", value="",
+    rlt_inp_pv     = pvproperty(name="XF:23ID-ID{{EPU:1-RLT}}Val:Inp1-SP.DOL$", value="XF:23ID2-OP{Mono}Enrgy-SP CP",
                                 dtype=str, max_length=60)
     rlt_output     = pvproperty(name="XF:23ID-ID{{EPU:1-RLT}}Val:Out1-I",       value=0.0,
                                 read_only=True)
@@ -263,8 +263,11 @@ class PGMEnergyIOC(PVGroup):
     fly_velo      = pvproperty(name="XF:23ID2-OP{{Mono}}Enrgy:FlyVelo-SP",     value=1.0)
     fly_start_cmd = pvproperty(name="XF:23ID2-OP{{Mono}}Cmd:FlyStart-Cmd.PROC",value=0)
     fly_stop_cmd  = pvproperty(name="XF:23ID2-OP{{Mono}}Cmd:Stop-Cmd.PROC",    value=0)
-    scan_sts      = pvproperty(name="XF:23ID2-OP{{Mono}}Sts:Scan-Sts",         value="Idle", dtype=str,
-                               max_length=20, read_only=True)
+    # Sts:Scan-Sts is an enumeration: E_ramp (startup/98-ramp.py) reads its strings and waits for
+    # the change to 'Ready'.
+    scan_sts      = pvproperty(name="XF:23ID2-OP{{Mono}}Sts:Scan-Sts",         value=0,
+                               dtype=ChannelType.ENUM, enum_strings=("Ready", "Scanning"),
+                               read_only=True)
     move_sts      = pvproperty(name="XF:23ID2-OP{{Mono}}Sts:Move-Sts",         value="Done", dtype=str,
                                max_length=20, read_only=True)
 
@@ -272,6 +275,35 @@ class PGMEnergyIOC(PVGroup):
     async def enrgy_sp(self, instance, value):
         await self.enrgy_i.write(value)
         return value
+
+    @fly_start_cmd.putter
+    async def fly_start_cmd(self, instance, value):
+        """A fly: the energy goes from the start value to the stop value at the fly velocity.
+
+        It takes |stop - start| / velocity seconds (divided by IOS_SIM_FLY_SPEEDUP, default 1), the
+        readback follows linearly, and the status is 'Scanning' meanwhile and 'Ready' after.
+        """
+        if int(value) == 1 and not getattr(self, "_flying", False):
+            self._flying = True
+            await self.scan_sts.write(1)
+            asyncio.get_event_loop().create_task(self._fly())
+        # ophyd's Signal.set waits until the readback equals the value it set; a .PROC field that
+        # read back 0 would keep that set "in progress" and the next ramp would fail.
+        return value
+
+    async def _fly(self):
+        import os
+
+        start = float(self.fly_start_sp.value)
+        stop = float(self.fly_stop_sp.value)
+        velocity = max(abs(float(self.fly_velo.value)), 1e-6)
+        seconds = abs(stop - start) / velocity / max(float(os.environ.get("IOS_SIM_FLY_SPEEDUP", "1")), 1e-6)
+        steps = max(int(seconds / 0.1), 1)
+        for step in range(1, steps + 1):
+            await asyncio.sleep(seconds / steps)
+            await self.enrgy_i.write(start + (stop - start) * step / steps)
+        await self.scan_sts.write(0)
+        self._flying = False
 
 
 # ---------------------------------------------------------------------------

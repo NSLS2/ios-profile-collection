@@ -71,6 +71,11 @@ def _stub_amostra() -> None:
             _log.debug("SIM: amostra %s stubbed (no-op)", type(self).__name__)
 
         def __getattr__(self, name):
+            # Private and special names must stay missing: the Queueserver inspects every object
+            # of the namespace, and one that answers __call__ or a marker such as _is_plan is
+            # taken for a plan.
+            if name.startswith("_"):
+                raise AttributeError(name)
             # Return a callable no-op for any method access
             def _noop(*a, **kw):
                 return None
@@ -167,9 +172,18 @@ def _patch_configure_base() -> None:
 
     def _sim_configure_base(user_ns, broker_name="temp", *args, **kwargs):
         # Override redis connection to local plaintext container
-        kwargs["redis_url"]  = "localhost"
-        kwargs["redis_port"] = 6379
+        kwargs["redis_url"]  = "127.0.0.1"
+        kwargs["redis_port"] = int(os.environ.get("IOS_SIM_REDIS_PORT", "6379"))
         kwargs["redis_ssl"]  = False
+        # The metadata (RE.md) lives in the same redis as the Queueserver's own keys when a Queueserver
+        # shares the server (sim/qs): without a prefix, RE.md lists all of them, and a queue (a redis
+        # list) makes every run fail with WRONGTYPE. nslsii uses the prefix only without TLS.
+        kwargs["redis_prefix"] = os.environ.get("IOS_SIM_REDIS_PREFIX", "ios-sim-md:")
+        # nslsii.configure_base does not pass redis_port on to open_redis_client (nslsii 0.11),
+        # which reads the host and the port from these variables first.
+        os.environ["REDIS_HOST"] = "127.0.0.1"
+        os.environ["REDIS_PORT"] = str(kwargs["redis_port"])
+        os.environ.pop("REDIS_PASSWORD", None)
 
         # Disable kafka publish if the sim Kafka container isn't running,
         # to avoid blocking connect timeouts.  Can be re-enabled by setting
@@ -181,7 +195,35 @@ def _patch_configure_base() -> None:
                 "Start the kafka container via 'pixi run sim-up' first."
             )
 
-        return _real_configure_base(user_ns, broker_name, *args, **kwargs)
+        if isinstance(broker_name, str):
+            # The production catalog is a Tiled profile ('ios') that a simulation does not have:
+            # use a temporary local catalog.
+            from databroker.v1 import temp
+
+            broker_name = temp()
+            _sim_log.info("SIM: databroker catalog is a temporary local one")
+
+        result = _real_configure_base(user_ns, broker_name, *args, **kwargs)
+        _log_documents(user_ns.get("RE"))
+        return result
+
+    def _log_documents(RE) -> None:
+        """If IOS_SIM_DOC_LOG is set, append every start and stop document to it (JSON lines).
+
+        The mock Queueserver's tests read it to check what a run's start document carries.
+        """
+        path = os.environ.get("IOS_SIM_DOC_LOG")
+        if RE is None or not path:
+            return
+        import json
+
+        def _write(name, doc):
+            if name in ("start", "stop"):
+                with open(path, "a", encoding="utf-8") as handle:
+                    handle.write(json.dumps({"name": name, "doc": doc}, default=str) + "\n")
+
+        RE.subscribe(_write)
+        _sim_log.info("SIM: start and stop documents are appended to %s", path)
 
     _nslsii.configure_base = _sim_configure_base
     _sim_log.info("SIM: nslsii.configure_base wrapped (redis→localhost, TLS off)")

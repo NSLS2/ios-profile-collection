@@ -98,10 +98,10 @@ def _seed_xs3_roi_names(timeout: float = 5.0) -> None:
         return
 
     roi_names = {
-        "XF:23ID2-ES{Xsp:1}:C1_MCA_ROI1_ROIName": "roi1",
-        "XF:23ID2-ES{Xsp:1}:C1_MCA_ROI2_ROIName": "roi2",
-        "XF:23ID2-ES{Xsp:1}:C1_MCA_ROI3_ROIName": "roi3",
-        "XF:23ID2-ES{Xsp:1}:C1_MCA_ROI4_ROIName": "roi4",
+        "XF:23ID2-ES{Xsp:1}:MCA1ROI:1:Name": "roi1",
+        "XF:23ID2-ES{Xsp:1}:MCA1ROI:2:Name": "roi2",
+        "XF:23ID2-ES{Xsp:1}:MCA1ROI:3:Name": "roi3",
+        "XF:23ID2-ES{Xsp:1}:MCA1ROI:4:Name": "roi4",
     }
 
     for pvname, name in roi_names.items():

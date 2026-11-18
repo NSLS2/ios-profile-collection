@@ -220,7 +220,12 @@ class ScalerIOC(PVGroup):
         the CNT reset back to 0 after the nominal preset time, which keeps
         the scaler state consistent for back-to-back counts.
         """
-        # value=1 means "Count" (enum index 1); 0 = "Done" (reset)
+        # value=1 means "Count" (enum index 1); 0 = "Done" (reset). caproto hands a putter the
+        # label of an enumeration ("Count"), not its index, when the client wrote it as a string.
+        if isinstance(value, bytes):
+            value = value.decode()
+        if isinstance(value, str):
+            value = ("Done", "Count").index(value) if value in ("Done", "Count") else int(float(value))
         if int(value) != 1:
             return value
 
@@ -329,7 +334,9 @@ class StandaloneSignalsIOC(PVGroup):
 # TwoButtonShutter IOC — needs enum strings
 # ---------------------------------------------------------------------------
 
-_SHUTTER_POS_ENUMS    = ("Unknown", "Open", "Closed", "Not Closed")
+# Open is 0 and Closed is 1: the suspenders of 99-settings.py (SuspendBoolHigh) suspend a plan
+# while the position status is high, that is, while the shutter is closed.
+_SHUTTER_POS_ENUMS    = ("Open", "Closed", "Unknown", "Not Closed")
 _SHUTTER_CMD_ENUMS    = ("None", "Open", "Close")
 _SHUTTER_FAIL_ENUMS   = ("OK", "Fail")
 
@@ -337,7 +344,7 @@ _SHUTTER_FAIL_ENUMS   = ("OK", "Fail")
 class ShutterIOC(PVGroup):
     """Simulated TwoButtonShutter for fe_shutter, ds_shutter, us_shutter.
 
-    Pos-Sts starts as 'Open' (index 1) so the SuspendBoolHigh suspenders
+    Pos-Sts starts as 'Open' (index 0) so the SuspendBoolHigh suspenders
     installed in 99-settings.py do not trigger (they suspend on high=closed).
     """
 
@@ -345,8 +352,8 @@ class ShutterIOC(PVGroup):
                           enum_strings=_SHUTTER_CMD_ENUMS)
     cls_cmd  = pvproperty(name="Cmd:Cls-Cmd", value=0, dtype=ChannelType.ENUM,
                           enum_strings=_SHUTTER_CMD_ENUMS)
-    # Pos-Sts: 0=Unknown,1=Open,2=Closed,3=Not Closed — start open (1)
-    pos_sts  = pvproperty(name="Pos-Sts", value=1, dtype=ChannelType.ENUM,
+    # Pos-Sts: 0=Open, 1=Closed, 2=Unknown, 3=Not Closed — start open (0)
+    pos_sts  = pvproperty(name="Pos-Sts", value=0, dtype=ChannelType.ENUM,
                           enum_strings=_SHUTTER_POS_ENUMS, read_only=True)
     fail_cls = pvproperty(name="Sts:FailCls-Sts", value=0, dtype=ChannelType.ENUM,
                           enum_strings=_SHUTTER_FAIL_ENUMS, read_only=True)
@@ -355,12 +362,12 @@ class ShutterIOC(PVGroup):
 
     @opn_cmd.putter
     async def opn_cmd(self, instance, value):
-        await self.pos_sts.write(1)   # 'Open'
+        await self.pos_sts.write(0)   # 'Open'
         return 0   # reset command
 
     @cls_cmd.putter
     async def cls_cmd(self, instance, value):
-        await self.pos_sts.write(2)   # 'Closed'
+        await self.pos_sts.write(1)   # 'Closed'
         return 0
 
 

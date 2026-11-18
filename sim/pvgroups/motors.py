@@ -113,7 +113,9 @@ class MotorFields(PVGroup):
         # Micro-sleep so the DMOV=0 monitor callback reaches ophyd before DMOV=1.
         # This is necessary because EpicsMotor._move_changed() only calls
         # _done_moving() when it sees a 1→0→1 DMOV transition (was_moving).
-        await asyncio.sleep(0.05)
+        # 0.05 s was too short on a busy machine: the monitor events for DMOV=0 and DMOV=1 were
+        # delivered together and ophyd never saw the move, so the plan waited for ever.
+        await asyncio.sleep(0.3)
         # Update position and signal 'done'
         await self.RBV.write(value)
         await self.RRBV.write(value)

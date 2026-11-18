@@ -100,7 +100,7 @@ def test_ca_connectivity() -> None:
         ("m1a.pit.MON",      "XF:23IDA-OP:1{Mir:1-Ax:Pit}Mtr_MON",  "any",    None),
         ("vortex.ACQG",      "XF:23ID2-ES{Vortex}mca1.ACQG",        "any",    None),
         ("specs.acquire",    "XF:23ID2-ES{SPECS}cam1:Acquire",       "any",    None),
-        ("xs3.roi1.name",    "XF:23ID2-ES{Xsp:1}:C1_MCA_ROI1_ROIName","any",  None),
+        ("xs3.roi1.name",    "XF:23ID2-ES{Xsp:1}:MCA1ROI:1:Name",     "any",  None),
     ]
 
     for name, pvname, kind, expected in checks:
@@ -212,6 +212,95 @@ def test_motor_scan() -> None:
         fail("scan motor", str(exc))
 
 # ---------------------------------------------------------------------------
+# Test 5: the Xspress3 stages, triggers, reads and unstages, and its file can be read
+# ---------------------------------------------------------------------------
+
+def test_xspress3() -> None:
+    """Stage, trigger and read the profile's Xspress3 against the simulated IOC.
+
+    The ROI totals follow the ROI windows, and the file that the run names is a link to the shared
+    simulated file below IOS_SIM_DATA_DIR (the IOC must have been started with that variable).
+    """
+    print("\n── Xspress3: stage, trigger, read, unstage ─────────────────")
+    import pathlib
+    import tempfile
+
+    data_dir = pathlib.Path(os.environ.get("IOS_SIM_DATA_DIR", ""))
+    if not data_dir.is_dir():
+        fail("xs3", "set IOS_SIM_DATA_DIR to the directory the IOC was started with")
+        return
+    try:
+        from bluesky import RunEngine
+        from bluesky.plans import count
+        from ophyd import Component as Cpt
+        from ophyd.areadetector import Xspress3Detector
+        from nslsii.areadetector.xspress3 import (
+            Xspress3HDF5Plugin,
+            Xspress3Trigger,
+            build_xspress3_class,
+        )
+
+        cls = build_xspress3_class(
+            channel_numbers=(1,),
+            mcaroi_numbers=(1, 2, 3, 4),
+            image_data_key="data",
+            xspress3_parent_classes=(Xspress3Detector, Xspress3Trigger),
+            extra_class_members={
+                "hdf5plugin": Cpt(
+                    Xspress3HDF5Plugin, "HDF1:", name="h5p", root_path=str(data_dir.resolve()),
+                    path_template=str(data_dir.resolve() / "%Y/%m/%d"), resource_kwargs={},
+                ),
+            },
+        )
+        xs3 = cls(prefix="XF:23ID2-ES{Xsp:1}:", name="xs3")
+        xs3.wait_for_connection(timeout=10)
+        for roi, (low, size) in {1: (400, 100), 2: (0, 10), 3: (900, 50), 4: (400, 100)}.items():
+            roi_dev = getattr(xs3.channel01, f"mcaroi{roi:02d}")
+            roi_dev.min_x.put(low)
+            roi_dev.size_x.put(size)
+        xs3.cam.acquire_time.put(0.2)
+        for channel in xs3.iterate_channels():  # as startup/22-xspress3.py does
+            channel.kind = "normal"
+            for mcaroi in channel.iterate_mcarois():
+                mcaroi.kind = "hinted"
+                mcaroi.total_rbv.kind = "hinted"
+
+        RE = RunEngine({})
+        docs = []
+        RE.subscribe(lambda name, doc: docs.append((name, doc)))
+        RE(count([xs3], num=2))
+
+        events = [doc for name, doc in docs if name == "event"]
+        resources = [doc for name, doc in docs if name == "resource"]
+        if len(events) == 2:
+            ok("count([xs3], num=2) — 2 events")
+        else:
+            fail("count([xs3])", f"expected 2 events, got {len(events)}")
+        totals = {k: v for k, v in events[-1]["data"].items() if "total_rbv" in k or "roi" in k.lower()}
+        by_roi = [v for k, v in sorted(totals.items()) if isinstance(v, (int, float))]
+        # ROI 1 and 4 cover the line at bin 450, ROI 2 (bins 0-10) and ROI 3 (900-950) do not
+        if len(by_roi) == 4 and by_roi[0] > 10 * by_roi[1] and by_roi[0] > 10 * by_roi[2]:
+            ok(f"the ROI totals follow the windows ({by_roi})")
+        else:
+            fail("xs3 ROI totals", f"{totals}")
+        links = [p for p in data_dir.rglob("*.h5") if p.is_symlink()]
+        shared = [p for p in data_dir.rglob("xspress3-sim.h5") if not p.is_symlink()]
+        if resources and links and shared and all(p.resolve() == shared[0].resolve() for p in links):
+            ok(f"the run's file ({links[-1].name}) is a link to the shared file")
+        else:
+            fail("xs3 file", f"resources={len(resources)} links={links} shared={shared}")
+        import h5py
+
+        with h5py.File(links[-1], "r") as handle:
+            frame = handle["entry/instrument/detector/data"][0, 0, :]
+        if frame.shape == (4096,) and frame.sum() > 0:
+            ok("a frame of the file can be read (4096 bins)")
+        else:
+            fail("xs3 frame", f"shape {frame.shape} sum {frame.sum()}")
+    except Exception as exc:
+        fail("xs3", f"{type(exc).__name__}: {exc}")
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -224,6 +313,7 @@ def main() -> int:
     test_ophyd_connect()
     test_count_sclr()
     test_motor_scan()
+    test_xspress3()
 
     print(f"\n{'=' * 60}")
     print(f"Results: {len(passed)} passed, {len(failed)} failed")

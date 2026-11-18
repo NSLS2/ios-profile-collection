@@ -133,12 +133,11 @@ jobs:
 
       - name: Start caproto sim IOC (background)
         run: |
-          EPICS_CAS_AUTO_BEACON_ADDR_LIST=no \
-          EPICS_CAS_BEACON_ADDR_LIST=127.0.0.1 \
           pixi run --environment sim python sim/run_iocs.py &
           echo "IOC_PID=$!" >> $GITHUB_ENV
-          sleep 5
+          sleep 15
         env:
+          IOS_SIM_DATA_DIR: "/tmp/ios-sim-data"   # the simulated Xspress3 writes its one shared file here
           UV_LOCK_TIMEOUT: "1200"
 
       - name: Verify IOC PV count (>2000 expected)
@@ -155,6 +154,7 @@ jobs:
         #   - ophyd device connect (EpicsMotor, EpicsSignal)
         #   - count([sclr], num=5)  — existing acceptance_tests/01 scenario
         #   - scan([sclr], appes_x, 0, 1, 3)  — motor scan smoke test
+        #   - the Xspress3: stage, trigger, read, ROI totals, the run's file
         run: |
           pixi run --environment sim python sim/run_tests.py
         env:
@@ -162,6 +162,7 @@ jobs:
           EPICS_CA_AUTO_ADDR_LIST: "NO"
           EPICS_CAS_AUTO_BEACON_ADDR_LIST: "no"
           EPICS_CAS_BEACON_ADDR_LIST: "127.0.0.1"
+          IOS_SIM_DATA_DIR: "/tmp/ios-sim-data"
           IOS_SIM_KAFKA: ""       # Kafka container not started in CI
           UV_LOCK_TIMEOUT: "1200"
 

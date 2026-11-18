@@ -7,19 +7,11 @@ Caproto PVGroups for the area-detector based devices:
     · SpecsDetectorCam  (cam1:)
     · Stats5 plugin     (Stats5:)
 
-  - Xspress3       (XF:23ID2-ES{Xsp:1}:)
-    · det1: cam     (Xspress3Detector / CamBase)
-    · C1_ channel + MCA_ROI1-4 per-roi PVs
-    · HDF1: plugin
+  (The Xspress3 is in sim/pvgroups/xspress3.py.)
 
 All PV names are identical to the real beamline IOC.  Behavioural fidelity:
   - SPECS cam: Acquire=1 → sleep AcquireTime, increment counters, Acquire→0.
-  - Xspress3: Acquire=1 → sleep AcquireTime, fill ROI totals.
-  - HDF1 plugins: serve all file-plugin PVs as stubs (no real file I/O).
-    FilePathExists_RBV is set to 1 so ophyd stage() doesn't complain.
-  - roi_name PVs on Xspress3 have non-empty default values so the
-    import-time ``mcaroi.roi_name.get()`` loop in 22-xspress3.py returns
-    immediately without blocking.
+  - HDF1 plugin of the SPECS: PV stubs (no file I/O).
 """
 
 from __future__ import annotations
@@ -316,119 +308,3 @@ _SpecsFlat = _make_flat_pvgroup(
 # for simplicity — connections succeed and basic reads work; a full acquire
 # simulation can be added in a later iteration).
 SpecsIOC = _SpecsFlat
-
-
-# ---------------------------------------------------------------------------
-# Xspress3
-# ---------------------------------------------------------------------------
-
-_XS3_N_BINS = 4096
-_XS3_CHANNELS = (1,)
-_XS3_ROIS = (1, 2, 3, 4)
-
-# roi_name values pre-seeded so 22-xspress3.py import-time .get() returns
-XS3_ROI_NAMES = {
-    (1, 1): "roi1",
-    (1, 2): "roi2",
-    (1, 3): "roi3",
-    (1, 4): "roi4",
-}
-
-
-class Xspress3CamIOC(PVGroup):
-    """Xspress3Detector cam surface (det1: prefix)."""
-
-    acquire          = pvproperty(name="det1:Acquire",           value=0)
-    acquire_busy     = pvproperty(name="det1:AcquireBusy",       value=0, read_only=True)
-    acquire_time     = pvproperty(name="det1:AcquireTime",       value=1.0)
-    acquire_time_rbv = pvproperty(name="det1:AcquireTime_RBV",   value=1.0, read_only=True)
-    num_images       = pvproperty(name="det1:NumImages",         value=1)
-    num_images_rbv   = pvproperty(name="det1:NumImages_RBV",     value=1, read_only=True)
-    trigger_mode     = pvproperty(name="det1:TriggerMode",       value=0)
-    trigger_mode_rbv = pvproperty(name="det1:TriggerMode_RBV",   value=0, read_only=True)
-    det_state        = pvproperty(name="det1:DetectorState_RBV", value=0, read_only=True)
-    status_msg       = pvproperty(name="det1:StatusMessage_RBV", value="Idle", dtype=str,
-                                  max_length=256, read_only=True)
-    erase            = pvproperty(name="det1:Erase",             value=0)
-    ERASE            = pvproperty(name="det1:ERASE",             value=0)
-    UPDATE           = pvproperty(name="det1:UPDATE",            value=0)
-    num_channels     = pvproperty(name="det1:NumChannels",       value=1)
-    num_channels_rbv = pvproperty(name="det1:NumChannels_RBV",   value=1, read_only=True)
-    sca_time_per_pt  = pvproperty(name="det1:SCA_TimePerPoint",  value=1.0)
-    ctrl_mca_roi     = pvproperty(name="det1:CTRL_MCA_ROI",      value=1)
-    ctrl_dtc         = pvproperty(name="det1:CTRL_DTC",          value=0)
-    data_type        = pvproperty(name="det1:DataType",          value=6)
-    data_type_rbv    = pvproperty(name="det1:DataType_RBV",      value=6, read_only=True)
-    array_counter    = pvproperty(name="det1:ArrayCounter",      value=0)
-    array_counter_rbv= pvproperty(name="det1:ArrayCounter_RBV",  value=0, read_only=True)
-    array_rate       = pvproperty(name="det1:ArrayRate_RBV",     value=0.0, read_only=True)
-
-
-class Xspress3ChannelIOC(PVGroup):
-    """Per-channel PVs for channel N.  Instantiated with prefix 'C{N}_'."""
-
-    sca_array    = pvproperty(name="SCA:ArrayData",  value=[0]*16, dtype=int,
-                              max_length=16, read_only=True)
-    mca_array    = pvproperty(name="MCA:ArrayData",  value=[0]*_XS3_N_BINS, dtype=int,
-                              max_length=_XS3_N_BINS, read_only=True)
-    roi_array    = pvproperty(name="ROI:ArrayData",  value=[0]*_XS3_N_BINS, dtype=int,
-                              max_length=_XS3_N_BINS, read_only=True)
-    dtc_flags    = pvproperty(name="DTC_FLAGS",      value=0)
-    dtc_aeg      = pvproperty(name="DTC_AEG",        value=0.0)
-    dtc_aeo      = pvproperty(name="DTC_AEO",        value=0.0)
-    dtc_iwg      = pvproperty(name="DTC_IWG",        value=0.0)
-    dtc_iwo      = pvproperty(name="DTC_IWO",        value=0.0)
-    dtc_owg      = pvproperty(name="DTC_OWG",        value=0.0)
-    dtc_owo      = pvproperty(name="DTC_OWO",        value=0.0)
-    gnsca        = pvproperty(name="GNSCA",          value=0.0, read_only=True)
-
-
-class Xspress3RoiIOC(PVGroup):
-    """Per-mcaroi PVs for channel N, roi M.  prefix = 'C{N}_MCA_ROI{M}_'"""
-
-    callbacks_ok = pvproperty(name="CallbacksOK_RBV", value=1, read_only=True)
-    min_x        = pvproperty(name="MinX",             value=0)
-    min_x_rbv    = pvproperty(name="MinX_RBV",         value=0, read_only=True)
-    size_x       = pvproperty(name="SizeX",            value=100)
-    size_x_rbv   = pvproperty(name="SizeX_RBV",        value=100, read_only=True)
-    total_rbv    = pvproperty(name="Total_RBV",         value=0.0, read_only=True)
-    net_rbv      = pvproperty(name="Net_RBV",           value=0.0, read_only=True)
-    roi_name     = pvproperty(name="ROIName",           value="", dtype=str, max_length=40)
-    roi_name_rbv = pvproperty(name="ROIName_RBV",       value="", dtype=str, max_length=40,
-                              read_only=True)
-
-
-_XS3_PREFIX = "XF:23ID2-ES{Xsp:1}:"
-
-_Xspress3Flat = _make_flat_pvgroup(
-    _XS3_PREFIX,
-    [
-        (Xspress3CamIOC,    ""),
-        (Xspress3ChannelIOC,"C1_"),
-        (Xspress3RoiIOC,    "C1_MCA_ROI1_"),
-        (Xspress3RoiIOC,    "C1_MCA_ROI2_"),
-        (Xspress3RoiIOC,    "C1_MCA_ROI3_"),
-        (Xspress3RoiIOC,    "C1_MCA_ROI4_"),
-        (HDF5PluginStub,    "HDF1:"),
-    ],
-)
-
-
-class Xspress3IOC(_Xspress3Flat):
-    """Flat Xspress3 IOC with roi_name startup seeding."""
-
-    async def _startup(self):
-        """Pre-seed ROI name PVs so 22-xspress3.py .get() returns immediately."""
-        for (ch, roi), name in XS3_ROI_NAMES.items():
-            roi_name_pv  = f"roi_name"   # attr on the flat group
-            roi_name_rbv = f"roi_name_rbv"
-            # Find attrs by scanning pvdb for the right ROI prefix
-            roi_prefix = f"{_XS3_PREFIX}C{ch}_MCA_ROI{roi}_"
-            for attr, pvprop in type(self)._pvs_.items():
-                pvname = pvprop.pvspec.name
-                # pvspec.name at this point is already escaped; unescape to compare
-                pvname_real = pvname.replace("{{", "{").replace("}}", "}")
-                if pvname_real == roi_prefix + "ROIName":
-                    await getattr(self, attr).write(name)
-                elif pvname_real == roi_prefix + "ROIName_RBV":
-                    await getattr(self, attr).write(name)

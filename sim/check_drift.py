@@ -106,6 +106,8 @@ EXTRA_ALLOWLIST_SUFFIXES: Tuple[str, ...] = (
 )
 
 EXTRA_ALLOWLIST_PREFIXES: Tuple[str, ...] = (
+    # The sentinel PV that proves a client is talking to the sim (sim/run_iocs.py)
+    "IOS-SIM:",
     # Temperature monitors: served for completeness, not walked via Device objects
     "XF:23ID1-OP{TCtrl:",
     "XF:23IDA-UT{DI}",
