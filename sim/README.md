@@ -249,6 +249,17 @@ git diff sim/pv_inventory.py          # review the generated changes
 pixi run sim-check-drift
 ```
 
+### Checking a happi database against the profile
+
+The ophyd-service configuration service loads a happi database (`integration/happi/sites/ios` and,
+for the simulation, `sites/ios-sim`). `sim/check_happi.py` compares it with the profile: PV sets per
+device, and the PVs of the database that the simulated IOC does not serve. The profile wins where
+they differ. It changes nothing.
+
+```bash
+pixi run -e qs-sim python sim/check_happi.py --happi PATH/TO/happi_db.json
+```
+
 ### What `--write` does (and doesn't do)
 
 `pixi run sim-write-inventory` regenerates the `build_inventory()` function
