@@ -371,9 +371,12 @@ def build() -> type:
         if PREFIX + "HDF1:NumCaptured_RBV" in names and getattr(self, "_capturing", False):
             captured = getattr(self, attr("HDF1:NumCaptured_RBV"))
             await captured.write(captured.value + 1)
-        await getattr(self, attr("det1:Acquire_RBV")).write(0)
+        # The readback going to 0 is what a client waits for (nslsii's Xspress3Trigger finishes its status
+        # on 1 -> 0), and the next trigger can follow at once, so the detector must be ready for it first:
+        # setpoint to 0, not busy, and only then the readback.
         await getattr(self, attr("det1:Acquire")).write(0)
         self._acquiring = False
+        await getattr(self, attr("det1:Acquire_RBV")).write(0)
 
     attrs[attr_of[PREFIX + "det1:Acquire"]] = attrs[attr_of[PREFIX + "det1:Acquire"]].putter(acquire_put)
 

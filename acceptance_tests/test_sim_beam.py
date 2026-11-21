@@ -192,6 +192,34 @@ def test_the_stop_commands_end_a_fly_and_do_nothing_when_there_is_none():
         assert not beam.is_scanning() and ioc._flying is False
 
 
+def test_the_xspress3_is_ready_for_the_next_trigger_when_it_reports_done():
+    from sim.pvgroups import xspress3
+
+    ioc = xspress3.build()(prefix="")
+    pv = {n: ioc.pvdb[xspress3.PREFIX + n] for n in ("det1:Acquire", "det1:Acquire_RBV", "det1:ArrayCounter", "det1:AcquireTime")}
+    acquire, readback, counter = pv["det1:Acquire"], pv["det1:Acquire_RBV"], pv["det1:ArrayCounter"]
+    again = {"left": 2}
+    original = readback.write
+
+    async def spy(value, *args, **kwargs):
+        await original(value, *args, **kwargs)
+        if int(value) == 0 and again["left"] > 0:
+            again["left"] -= 1
+            # the plan's next trigger, the moment it hears "done" (a scan triggers every 0.1 s or less)
+            await acquire.pvspec.put(ioc, acquire, 1)
+
+    readback.write = spy
+
+    async def run():
+        await pv["det1:AcquireTime"].write(0.05)
+        await acquire.pvspec.put(ioc, acquire, 1)
+        await asyncio.sleep(1.5)
+
+    asyncio.run(run())
+    assert counter.value == 3, counter.value  # one trigger and the two that followed their "done"
+    assert acquire.value in (0, "Done") and readback.value in (0, "Done")
+
+
 def test_the_scaler_starts_in_autocount_like_the_real_one():
     from sim.pvgroups.scaler_signals import ScalerIOC
 
