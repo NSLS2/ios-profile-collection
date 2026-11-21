@@ -65,10 +65,10 @@ def test_the_guard_refuses_when_the_simulated_ioc_does_not_answer():
                 os.environ[key] = value
 
 
-def test_the_startup_directory_has_the_guard_first_and_the_sim_paths_last():
+def test_the_startup_directory_has_the_guard_first_and_the_sim_files_last():
     with tempfile.TemporaryDirectory() as tmp:
         names = make_startup_dir.make_startup_dir(pathlib.Path(tmp))
-        assert names[0] == "00-00-sim-guard.py" and names[-1] == "zz-sim-paths.py"
+        assert names[0] == "00-00-sim-guard.py" and names[-2:] == ["zz-sim-paths.py", "zz-xs3-trigger.py"]
         assert "47-IOS_gui.py" not in names and "00-startup.py" in names and "99-xas-edge-plans.py" in names
         assert (pathlib.Path(tmp) / "00-startup.py").is_symlink()
         assert (pathlib.Path(tmp) / "user_group_permissions.yaml").is_file()
@@ -114,6 +114,87 @@ def test_the_xspress3_serves_the_names_of_the_profiles_class_and_only_below_the_
         assert xspress3._inside(directory, directory / "2026" / "11" / "x.h5")
         assert not xspress3._inside(directory, pathlib.Path("/nsls2/data/ios/legacy/xspress3_data/2026"))
         assert not xspress3._inside(directory, directory / ".." / "elsewhere")
+
+
+class _FakeCounter:
+    """The image counter of a detector: a readback that can be read and subscribed to."""
+
+    def __init__(self, value=5):
+        self.value, self.subs = value, []
+
+    def get(self):
+        return self.value
+
+    def subscribe(self, callback, run=True):
+        self.subs.append(callback)
+        if run:
+            callback(value=self.value)
+
+    def clear_sub(self, callback):
+        if callback in self.subs:
+            self.subs.remove(callback)
+
+    def advance(self):
+        self.value += 1
+        for callback in list(self.subs):
+            callback(value=self.value)
+
+
+def _fake_detector():
+    from types import SimpleNamespace
+
+    from ophyd.status import Status
+
+    detector = SimpleNamespace(cam=SimpleNamespace(array_counter=_FakeCounter()), _acquire_status=None)
+
+    def trigger():
+        detector._acquire_status = Status()
+        return detector._acquire_status
+
+    detector.trigger = trigger
+    return detector
+
+
+def test_a_trigger_finishes_on_the_image_counter_when_the_readback_edge_is_missed():
+    from sim.qs.xs3_trigger import install
+
+    detector = _fake_detector()
+    install(detector, grace=0.05)
+    status = detector.trigger()
+    assert not status.done
+    detector.cam.array_counter.advance()  # the acquisition ended; the 1 -> 0 of the readback never comes
+    assert not status.done  # the readback has its grace first
+    assert status.wait(timeout=2) is None and status.done and status.success
+    assert detector._acquire_status is None  # nslsii's callback has nothing left to finish twice
+    assert detector.cam.array_counter.subs == []
+
+
+def test_a_trigger_that_the_readback_finishes_in_time_is_left_alone():
+    import time
+
+    from sim.qs.xs3_trigger import install
+
+    detector = _fake_detector()
+    install(detector, grace=0.05)
+    status = detector.trigger()
+    detector.cam.array_counter.advance()  # the counter moves just before the edge, as usual
+    status.set_finished()  # nslsii's callback saw the edge
+    time.sleep(0.2)  # the grace passes: nothing happens, nothing raises
+    assert status.done and status.success
+    assert detector.cam.array_counter.subs == []
+
+
+def test_a_trigger_does_not_finish_before_the_counter_moves():
+    import time
+
+    from sim.qs.xs3_trigger import install
+
+    detector = _fake_detector()
+    install(detector, grace=0.05)
+    status = detector.trigger()
+    time.sleep(0.2)
+    assert not status.done
+    assert len(detector.cam.array_counter.subs) == 1
 
 
 if __name__ == "__main__":
