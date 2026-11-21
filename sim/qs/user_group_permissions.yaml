@@ -1,0 +1,32 @@
+# Permissions of the mock Queueserver (IOS, simulated devices; never copy this to the real
+# beamline's Queueserver, which only IOS administrators configure).
+#
+# Plans are matched by exact name (a regular expression would start with a colon). "primary" is
+# the group of the HTTP server's single user API key and may run the plans the XAS experiment
+# model builds plus two diagnostics.
+# Devices are all the simulated ones: the plans take plain values, not devices.
+user_groups:
+  root:  # all plans and devices (required by the Queueserver)
+    allowed_plans:
+      - null
+    forbidden_plans:
+      - null
+    allowed_devices:
+      - null
+    forbidden_devices:
+      - null
+  primary:
+    allowed_plans:
+      - "xas_edge_ascan"
+      - "xas_pd_ascan"
+      - "XAS_scan"
+      - "PD_scan"
+      - "find_sample"
+      - "count"
+      - "mv"
+    forbidden_plans:
+      - null
+    allowed_devices:
+      - null
+    forbidden_devices:
+      - null
