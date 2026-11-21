@@ -14,8 +14,9 @@ Behaviour
 * Every setpoint with a ``_RBV`` readback follows it.
 * ``det1:Acquire`` = 1 starts an acquisition: ``Acquire`` and ``Acquire_RBV`` stay 1 for
   ``AcquireTime`` seconds (at most ``MAX_ACQUIRE_S``), then the simulated spectrum (a background and
-  two fluorescence lines, scaled with the time) goes into ``MCA1:ArrayData`` and ``MCASUM1:ArrayData``,
+  two fluorescence lines, scaled with the time and the beam intensity) goes into ``MCA1:ArrayData`` and ``MCASUM1:ArrayData``,
   the ROI totals are the sums over ``[MinX, MinX + SizeX)``, the counters count, and both go back to 0.
+  ROIs 3 and 4 start with a window around each line (:data:`ROI_WINDOWS`), so the totals count from the start.
 * ``HDF1:Capture`` = 1 starts a capture and makes the file that the plugin names (``FilePath``,
   ``FileName``, ``FileNumber`` and ``FileTemplate``) a symbolic link to one shared simulated file
   (:func:`ensure_shared_file`); ending it increments the file number. Every image of every run is the
@@ -38,6 +39,8 @@ import pathlib
 import numpy as np
 from caproto import ChannelType
 from caproto.server import PVGroup, pvproperty
+
+from . import beam
 
 log = logging.getLogger("ios.sim")
 
@@ -108,6 +111,11 @@ DEFAULTS: dict[str, object] = {
     "MinX": 0,
     "SizeX": 0,
 }
+
+# The windows that the ROIs start with, so that the totals count something before anyone applies a
+# preset: ROI 4 (PFY) around the line at bin 820 and ROI 3 (IPFY) around the one at bin 450, each
+# +-3 sigma. ROIs 1 and 2 stay empty.
+ROI_WINDOWS: dict[int, tuple[int, int]] = {4: (775, 90), 3: (414, 72)}
 
 
 class Needed:
@@ -197,6 +205,18 @@ def _index(value, strings: tuple[str, ...]) -> int:
     return int(value)
 
 
+def roi_window_default(short: str) -> int | None:
+    """The starting ``MinX`` or ``SizeX`` (or its readback) of an ROI named like ``MCA1ROI:4:MinX``."""
+    parts = short.split(":")
+    if len(parts) != 3 or parts[0] != "MCA1ROI" or not parts[1].isdigit():
+        return None
+    window = ROI_WINDOWS.get(int(parts[1]))
+    field = parts[2].removesuffix("_RBV")
+    if window is None or field not in ("MinX", "SizeX"):
+        return None
+    return window[0] if field == "MinX" else window[1]
+
+
 def _short(name: str) -> str:
     return name[len(PREFIX):] if name.startswith(PREFIX) else name
 
@@ -208,8 +228,11 @@ def _enum_key(short: str) -> str:
     return last.lower()
 
 
-def spectrum(seconds: float, rng: np.random.Generator) -> np.ndarray:
-    """A simulated fluorescence spectrum: a falling background and two lines."""
+def spectrum(seconds: float, rng: np.random.Generator, intensity: float = 1.0) -> np.ndarray:
+    """A simulated fluorescence spectrum: a falling background and two lines.
+
+    ``intensity`` scales the rate (the relative beam intensity, sim/pvgroups/beam.py).
+    """
     bins = np.arange(N_BINS)
     rate = (
         5.0
@@ -217,7 +240,7 @@ def spectrum(seconds: float, rng: np.random.Generator) -> np.ndarray:
         + 3000.0 * np.exp(-0.5 * ((bins - 450) / 12.0) ** 2)
         + 2000.0 * np.exp(-0.5 * ((bins - 820) / 15.0) ** 2)
     )
-    return rng.poisson(rate * max(seconds, 0.01)).astype(np.int32)
+    return rng.poisson(rate * max(seconds, 0.01) * max(intensity, 0.0)).astype(np.int32)
 
 
 def data_dir() -> pathlib.Path:
@@ -297,6 +320,9 @@ def build() -> type:
             value, kwargs = str(DEFAULTS.get(_last(short), "")), {"dtype": str, "max_length": 256}
         else:
             value = DEFAULTS.get(_last(short), 0.0)
+            window = roi_window_default(short)
+            if window is not None:
+                value = window
             if short.startswith("MCA1ROI:") and short.endswith(":Name"):
                 value = ""
             kwargs = {"dtype": float if isinstance(value, float) else int}
@@ -324,7 +350,7 @@ def build() -> type:
         rng = np.random.default_rng()
         seconds = float(getattr(self, attr("det1:AcquireTime")).value)
         await asyncio.sleep(min(max(seconds, 0.0), MAX_ACQUIRE_S))
-        counts = spectrum(seconds, rng)
+        counts = spectrum(seconds, rng, beam.intensity())
         for array in ("MCA1:ArrayData", "MCASUM1:ArrayData"):
             if PREFIX + array in names:
                 await getattr(self, attr(array)).write(counts)

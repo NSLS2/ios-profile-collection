@@ -31,6 +31,8 @@ import numpy as np
 from caproto.server import PVGroup, pvproperty
 from caproto import ChannelType
 
+from . import beam
+
 
 # ---------------------------------------------------------------------------
 # EPU stop signals (absolute PV names, no prefix)
@@ -299,11 +301,15 @@ class PGMEnergyIOC(PVGroup):
         velocity = max(abs(float(self.fly_velo.value)), 1e-6)
         seconds = abs(stop - start) / velocity / max(float(os.environ.get("IOS_SIM_FLY_SPEEDUP", "1")), 1e-6)
         steps = max(int(seconds / 0.1), 1)
-        for step in range(1, steps + 1):
-            await asyncio.sleep(seconds / steps)
-            await self.enrgy_i.write(start + (stop - start) * step / steps)
-        await self.scan_sts.write(0)
-        self._flying = False
+        beam.set_scanning(True)  # the PD peaks of a scan (sim/pvgroups/beam.py)
+        try:
+            for step in range(1, steps + 1):
+                await asyncio.sleep(seconds / steps)
+                await self.enrgy_i.write(start + (stop - start) * step / steps)
+        finally:
+            beam.set_scanning(False)
+            await self.scan_sts.write(0)
+            self._flying = False
 
 
 # ---------------------------------------------------------------------------

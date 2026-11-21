@@ -23,10 +23,19 @@ Shutter PVs carry enum strings matching what TwoButtonShutter expects::
 from __future__ import annotations
 
 import asyncio
+import logging
 import numpy as np
 
 from caproto.server import PVGroup, pvproperty, SubGroup
 from caproto import ChannelType
+
+from . import beam
+
+# Counts per second of the two signals that the beam model drives: the photodiode (scaler channel 2)
+# and I0, the gold mesh (channel 3). The other channels keep random counts.
+PD_RATE = 150_000.0
+I0_RATE = 200_000.0
+PD_EXTRA_NOISE = 0.005
 
 
 # ---------------------------------------------------------------------------
@@ -49,14 +58,20 @@ class ScalerIOC(PVGroup):
     Prefix: ``XF:23ID2-ES{Sclr:1}``
 
     When ``.CNT`` is written with 1 the scaler counts for ``.TP`` seconds
-    (simulated via asyncio.sleep) then fills channel values with random
-    integers and resets ``.CNT`` to 0.
+    (simulated via asyncio.sleep) then fills channel values and resets ``.CNT`` to 0.
+
+    Channel 2 (PD) and channel 3 (I0) follow the beam model (sim/pvgroups/beam.py): Poisson counts of
+    a rate that changes slowly with time, and PD has now and then a peak. The other channels are
+    random integers.
+
+    Like the real record, it starts in AutoCount (``.CONT`` = 1): every ``.TP1`` seconds it counts
+    by itself, unless a count that ``.CNT`` started is running or the mono is flying (a scan).
     """
 
     # -- Control -----------------------------------------------------------
     CNT  = pvproperty(name=".CNT",  value=0, dtype=ChannelType.ENUM,
                       enum_strings=("Done", "Count"), doc="Count trigger")
-    CONT = pvproperty(name=".CONT", value=0, dtype=ChannelType.ENUM,
+    CONT = pvproperty(name=".CONT", value=1, dtype=ChannelType.ENUM,
                       enum_strings=("OneShot", "AutoCount"), doc="Auto-count mode")
     DLY  = pvproperty(name=".DLY",  value=0.0, dtype=float)
     DLY1 = pvproperty(name=".DLY1", value=0.0, dtype=float)
@@ -206,6 +221,55 @@ class ScalerIOC(PVGroup):
     # calc5 sub-record used by norm_ch4
     calc5_VAL = pvproperty(name="_calc5.VAL", value=0.0, dtype=float, read_only=True)
 
+    async def _fill(self, seconds: float) -> None:
+        """Write the channels of one count of ``seconds``."""
+        rng = np.random.default_rng()
+        channel_pvs = [
+            self.S1,  self.S2,  self.S3,  self.S4,  self.S5,  self.S6,
+            self.S7,  self.S8,  self.S9,  self.S10, self.S11, self.S12,
+            self.S13, self.S14, self.S15, self.S16, self.S17, self.S18,
+            self.S19, self.S20, self.S21, self.S22, self.S23, self.S24,
+            self.S25, self.S26, self.S27, self.S28, self.S29, self.S30,
+            self.S31, self.S32,
+        ]
+        intensity = beam.intensity()
+        pd_noise = max(1.0 + PD_EXTRA_NOISE * rng.standard_normal(), 0.0)
+        for i, ch in enumerate(channel_pvs):
+            if i == 0:
+                await ch.write(int(seconds * self.FREQ.value))
+            elif i == 1:
+                await ch.write(int(rng.poisson(PD_RATE * seconds * intensity * beam.pd_gain() * pd_noise)))
+            elif i == 2:
+                await ch.write(int(rng.poisson(I0_RATE * seconds * intensity)))
+            else:
+                await ch.write(int(rng.integers(1000, 100_000)))
+        await self.T.write(seconds)
+        await self.calc5_VAL.write(float(rng.integers(1000, 50_000)))
+
+    @staticmethod
+    def _index(value, strings) -> int:
+        if isinstance(value, bytes):
+            value = value.decode()
+        if isinstance(value, str):
+            return strings.index(value) if value in strings else int(float(value))
+        return int(value)
+
+    async def _startup(self):
+        """Called by run_iocs.run_with_startup: start the AutoCount loop."""
+        asyncio.get_event_loop().create_task(self._auto_count())
+
+    async def _auto_count(self):
+        while True:
+            period = max(float(self.TP1.value), 0.1)
+            await asyncio.sleep(period)
+            try:
+                auto = self._index(self.CONT.value, ("OneShot", "AutoCount")) == 1
+                counting = self._index(self.CNT.value, ("Done", "Count")) == 1
+                if auto and not counting and not beam.is_scanning():
+                    await self._fill(period)
+            except Exception:  # a failed count must not end the loop
+                logging.getLogger("ios.sim").exception("auto count failed")
+
     @CNT.putter
     async def CNT(self, instance, value):
         """Simulate a count.
@@ -230,24 +294,7 @@ class ScalerIOC(PVGroup):
             return value
 
         preset = float(self.TP.value)
-        rng = np.random.default_rng()
-
-        # Fill channels immediately with plausible random counts
-        channel_pvs = [
-            self.S1,  self.S2,  self.S3,  self.S4,  self.S5,  self.S6,
-            self.S7,  self.S8,  self.S9,  self.S10, self.S11, self.S12,
-            self.S13, self.S14, self.S15, self.S16, self.S17, self.S18,
-            self.S19, self.S20, self.S21, self.S22, self.S23, self.S24,
-            self.S25, self.S26, self.S27, self.S28, self.S29, self.S30,
-            self.S31, self.S32,
-        ]
-        for i, ch in enumerate(channel_pvs):
-            if i == 0:
-                await ch.write(int(preset * self.FREQ.value))
-            else:
-                await ch.write(int(rng.integers(1000, 100_000)))
-        await self.T.write(preset)
-        await self.calc5_VAL.write(float(rng.integers(1000, 50_000)))
+        await self._fill(preset)
 
         # Reset CNT→0 ("Done") after preset time (background task)
         async def _reset():
