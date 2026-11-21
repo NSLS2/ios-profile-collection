@@ -273,9 +273,29 @@ class PGMEnergyIOC(PVGroup):
     move_sts      = pvproperty(name="XF:23ID2-OP{{Mono}}Sts:Move-Sts",         value="Done", dtype=str,
                                max_length=20, read_only=True)
 
+    def _stop_fly(self) -> None:
+        """End a fly that is running: the mono stops where it is."""
+        if getattr(self, "_flying", False):
+            self._stop_requested = True
+
     @enrgy_sp.putter
     async def enrgy_sp(self, instance, value):
+        # A new setpoint ends a fly, as it does on the mono (E_ramp's clean-up writes it after a scan,
+        # also after a stop); the readback then goes to the setpoint.
+        self._stop_fly()
         await self.enrgy_i.write(value)
+        return value
+
+    @stop_cmd.putter
+    async def stop_cmd(self, instance, value):
+        if int(value) == 1:
+            self._stop_fly()
+        return value
+
+    @fly_stop_cmd.putter
+    async def fly_stop_cmd(self, instance, value):
+        if int(value) == 1:
+            self._stop_fly()
         return value
 
     @fly_start_cmd.putter
@@ -283,7 +303,8 @@ class PGMEnergyIOC(PVGroup):
         """A fly: the energy goes from the start value to the stop value at the fly velocity.
 
         It takes |stop - start| / velocity seconds (divided by IOS_SIM_FLY_SPEEDUP, default 1), the
-        readback follows linearly, and the status is 'Scanning' meanwhile and 'Ready' after.
+        readback follows linearly, and the status is 'Scanning' meanwhile and 'Ready' after. A new
+        energy setpoint or the stop command ends it at once, where it is.
         """
         if int(value) == 1 and not getattr(self, "_flying", False):
             self._flying = True
@@ -302,9 +323,12 @@ class PGMEnergyIOC(PVGroup):
         seconds = abs(stop - start) / velocity / max(float(os.environ.get("IOS_SIM_FLY_SPEEDUP", "1")), 1e-6)
         steps = max(int(seconds / 0.1), 1)
         beam.set_scanning(True)  # the PD peaks of a scan (sim/pvgroups/beam.py)
+        self._stop_requested = False
         try:
             for step in range(1, steps + 1):
                 await asyncio.sleep(seconds / steps)
+                if self._stop_requested:
+                    break
                 await self.enrgy_i.write(start + (stop - start) * step / steps)
         finally:
             beam.set_scanning(False)

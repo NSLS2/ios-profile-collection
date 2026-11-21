@@ -179,7 +179,7 @@ The type of each PV is guessed from its name and component.
   `/nsls2/data/ios/legacy/xspress3_data` cannot create files there.
 
 The mono fly (`Cmd:FlyStart-Cmd.PROC`) moves the energy readback from the start to the stop energy at the fly
-velocity and reports `Scanning` and then `Ready` (`IOS_SIM_FLY_SPEEDUP` shortens it), so `E_ramp` runs.
+velocity and reports `Scanning` and then `Ready` (`IOS_SIM_FLY_SPEEDUP` shortens it), so `E_ramp` runs. A new energy setpoint (`Enrgy-SP`, which `E_ramp`'s clean-up writes after a scan, also after a stop) or the stop command ends the fly at once, where it is, as on the mono; the scan schedule of the beam model ends with it.
 
 ## PVs that are not simulated: the fallback
 

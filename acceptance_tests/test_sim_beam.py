@@ -142,6 +142,56 @@ def test_the_scaler_pd_and_i0_follow_the_beam_and_their_ratio_stays_flat():
     assert ratio.std() / ratio.mean() < 0.05  # flat, apart from the noise and the peaks of PD
 
 
+def _flying_mono():
+    from sim.pvgroups.positioners import PGMEnergyIOC
+
+    return PGMEnergyIOC(prefix="")
+
+
+def test_a_new_energy_setpoint_ends_a_fly_where_it_is_and_the_scan_schedule_with_it():
+    ioc = _flying_mono()
+
+    async def run():
+        await ioc.fly_start_sp.write(400.0)
+        await ioc.fly_stop_sp.write(800.0)
+        await ioc.fly_velo.write(1.0)  # 400 s if it were not stopped
+        ioc._flying = True
+        await ioc.scan_sts.write(1)
+        task = asyncio.ensure_future(ioc._fly())
+        await asyncio.sleep(0.6)
+        assert beam.is_scanning()
+        where = ioc.enrgy_i.value
+        await ioc.enrgy_sp.pvspec.put(ioc, ioc.enrgy_sp, where)  # E_ramp's clean-up after a stop
+        await asyncio.wait_for(task, 2.0)
+        return where
+
+    where = asyncio.run(run())
+    assert not beam.is_scanning()
+    assert ioc._flying is False and ioc.scan_sts.value in (0, "Ready")
+    assert 400.0 < where < 410.0 and abs(ioc.enrgy_i.value - where) < 1e-6  # it stopped where it was
+
+
+def test_the_stop_commands_end_a_fly_and_do_nothing_when_there_is_none():
+    for command in ("stop_cmd", "fly_stop_cmd"):
+        ioc = _flying_mono()
+        ioc._stop_fly()  # nothing is flying
+        assert not getattr(ioc, "_stop_requested", False)
+
+        async def run():
+            await ioc.fly_start_sp.write(400.0)
+            await ioc.fly_stop_sp.write(800.0)
+            await ioc.fly_velo.write(1.0)
+            ioc._flying = True
+            await ioc.scan_sts.write(1)
+            task = asyncio.ensure_future(ioc._fly())
+            await asyncio.sleep(0.3)
+            await getattr(ioc, command).pvspec.put(ioc, getattr(ioc, command), 1)
+            await asyncio.wait_for(task, 2.0)
+
+        asyncio.run(run())
+        assert not beam.is_scanning() and ioc._flying is False
+
+
 def test_the_scaler_starts_in_autocount_like_the_real_one():
     from sim.pvgroups.scaler_signals import ScalerIOC
 
